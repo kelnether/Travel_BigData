@@ -10,6 +10,20 @@ scipy>=1.7.0
 matplotlib>=3.4.0
 statsmodels>=0.12.2
 ```
+
+## 景点数据爬虫
+部署数据库后，运行pachong.py
+
+## 客流量大数据分析
+analysis.py【针对客流量数据的图表展示】
+process_data
+ 
+## 部署流程
+程序入口：app.py
+子程序（blueprint）：analysis.py
+
+
+
 ## MySQL 配置语句
 
 以下是用于创建数据库及相关数据表的 MySQL 配置语句：
@@ -97,9 +111,5 @@ CREATE TABLE IF NOT EXISTS attractions_test (
 );
 ```
 
-## 景点数据爬虫
-部署数据库后，运行pachong.py
 
-## 部署流程
-程序入口：app.py
-子程序（blueprint）：analysis.py
+
