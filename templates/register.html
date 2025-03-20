@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        input, select, button { padding: 10px; font-size: 16px; margin: 5px; }
+        #result { margin-top: 20px; font-size: 18px; color: green; }
+        .multi-select { width: 200px; height: 100px; }
+    </style>
+</head>
+<body>
+
+    <h1>注册新用户</h1>
+    <input type="text" id="username" placeholder="输入用户名"><br>
+    <input type="password" id="password" placeholder="输入密码"><br>
+
+    <p>选择偏好类别（可多选）：</p>
+    <select id="preferences" class="multi-select" multiple>
+        <option value="历史">历史</option>
+        <option value="文化">文化</option>
+        <option value="美食">美食</option>
+        <option value="自然">自然</option>
+    </select><br>
+
+    <p>或者输入新的偏好：</p>
+    <input type="text" id="new_preference" placeholder="输入新的偏好">
+    <button onclick="addPreference()">添加</button><br>
+
+    <button onclick="register()">注册</button>
+    <p id="result"></p>
+
+    <script>
+        function addPreference() {
+            const newPreference = document.getElementById("new_preference").value.trim();
+            if (newPreference) {
+                const select = document.getElementById("preferences");
+                const option = document.createElement("option");
+                option.value = newPreference;
+                option.textContent = newPreference;
+                option.selected = true; // 让新添加的选项默认被选中
+                select.appendChild(option);
+                document.getElementById("new_preference").value = "";
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const preferences = Array.from(document.getElementById("preferences").selectedOptions).map(option => option.value);
+
+            if (!username || !password || preferences.length === 0) {
+                document.getElementById("result").innerText = "❌ 请填写所有字段！";
+                return;
+            }
+
+            const response = await fetch("/register_api", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password, preferences })
+            });
+
+            const data = await response.json();
+            document.getElementById("result").innerText = data.message;
+
+            if (response.status === 201) {
+                setTimeout(() => { window.location.href = "/login"; }, 2000);
+            }
+        }
+    </script>
+
+</body>
+</html>

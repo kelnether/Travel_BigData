@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+
+
+<html lang="zh">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>景点搜索</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f4; }
+        input, button { padding: 10px; font-size: 16px; }
+        #result-container { margin-top: 20px; width: 60%; margin-left: auto; margin-right: auto; }
+        .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin: auto; width: 50%; }
+        .recommendations, .search-result { text-align: left; width: 60%; margin-left: auto; margin-right: auto; margin-top: 30px; }
+        .spot-card { display: flex; align-items: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-bottom: 10px; }
+        .spot-card img { width: 100px; height: 80px; border-radius: 5px; margin-right: 15px; }
+        .spot-info { flex: 1; }
+        .spot-name { font-size: 18px; font-weight: bold; color: #007BFF; }
+        .spot-score { font-size: 14px; color: #FF5733; }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <h1>景点搜索系统</h1>
+        <input type="text" id="poiName" placeholder="输入景点名称">
+        <button onclick="searchSpot()">搜索</button>
+    </div>
+
+    <!-- 搜索结果 -->
+    <div class="search-result" id="search-result" style="display: none;">
+        <h2>🔍 搜索结果</h2>
+        <div id="search-output"></div>
+    </div>
+
+    <!-- 推荐景点 -->
+    <div class="recommendations" id="recommendations">
+        <h2>🌟 你的个性化推荐</h2>
+        <div id="recommendation-output"></div>
+    </div>
+
+    <script>
+        async function searchSpot() {
+            const user_id = "UserA";  // 假设已登录用户
+            const poiName = document.getElementById("poiName").value.trim();
+
+            if (!poiName) {
+                alert("❌ 请输入景点名称！");
+                return;
+            }
+
+            const response = await fetch("/search_api", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id, poiName })
+            });
+
+            const data = await response.json();
+            updateSearchResult(data.spots);
+            updateRecommendations(data.recommendations);
+        }
+
+        function updateSearchResult(spots) {
+            const searchDiv = document.getElementById("search-result");
+            const outputDiv = document.getElementById("search-output");
+            outputDiv.innerHTML = "";
+
+            if (spots && spots.length > 0) {
+                spots.forEach(spot => {
+                    outputDiv.innerHTML += `
+                        <div class="spot-card">
+                            <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
+                            <div class="spot-info">
+                                <div class="spot-name">${spot.name}</div>
+                                <div class="spot-score">评分: ⭐${spot.score}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                outputDiv.innerHTML = "<p>❌ 未找到相关景点</p>";
+            }
+            searchDiv.style.display = "block";
+        }
+
+        function updateRecommendations(recommendations) {
+            const recommendationDiv = document.getElementById("recommendation-output");
+            recommendationDiv.innerHTML = "";
+
+            if (recommendations && recommendations.length > 0) {
+                recommendations.forEach(spot => {
+                    recommendationDiv.innerHTML += `
+                        <div class="spot-card">
+                            <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
+                            <div class="spot-info">
+                                <div class="spot-name">${spot.name}</div>
+                                <div class="spot-score">评分: ⭐${spot.score}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                recommendationDiv.innerHTML = "<p>⚠️ 暂无推荐</p>";
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主页</title>
+    <!-- 如果你有自定义样式或脚本，可保留以下引用 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tourism_data.css') }}">
+    <script src="{{ url_for('static', filename='js/tourism_data.js') }}" defer></script>
+
+    <!-- 引入 Chart.js（通过CDN） -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* 全局基础样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: #f0f6ff; /* 示例背景，可自行修改 */
+        }
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 0 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 20px;
+            font-size: 18px;
+        }
+        .navbar a:hover {
+            background-color: #575757;
+        }
+        .navbar-right {
+            display: flex;
+        }
+        .container {
+            margin-top: 80px; /* 给导航栏留出空间 */
+        }
+
+        /* 三个图表的“悬浮卡片”容器样式 - 背景改为透明 */
+        .corner-chart {
+            position: fixed;
+            background: transparent; /* 背景设置为透明 */
+            padding: 10px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            z-index: 900;
+            width: 30vw; /* 以视窗宽度的20%为容器宽度，可根据需求调整 */
+        }
+        .corner-chart canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* 分别控制三个图表在页面的不同位置 */
+        #chart-hourly {
+            top: 80px;
+            left: 10px;
+        }
+        #chart-daily {
+            top: 80px;
+            right: 10px;
+        }
+        #chart-scenic {
+            bottom: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <a href="/">🏠 首页</a>
+        <div class="navbar-right">
+            {% if logged_in %}
+                <a href="/search">🔍 搜索景点</a>
+                <a href="/logout">🚪 退出</a>
+            {% else %}
+                <a href="/login">🔑 登录</a>
+                <a href="/register">📝 注册</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 页面主体内容 -->
+    <div class="container">
+        <h1>欢迎来到景点推荐系统</h1>
+        <p>🔍 通过搜索探索更多景点！</p>
+    </div>
+
+    <!-- 左上角：按小时统计图 -->
+    <div id="chart-hourly" class="corner-chart">
+        <canvas id="historyChart"></canvas>
+    </div>
+
+    <!-- 右上角：每日趋势图 -->
+    <div id="chart-daily" class="corner-chart">
+        <canvas id="dailyChart"></canvas>
+    </div>
+
+    <!-- 右下角：景点分布图（仅显示前20，其余合并为“其他”） -->
+    <div id="chart-scenic" class="corner-chart">
+        <canvas id="scenicChart"></canvas>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+          // 1. 按小时统计图
+          function renderHourlyChart() {
+              fetch('/analysis/api/history')
+              .then(response => response.json())
+              .then(data => {
+                  const hourlyCounts = {};
+                  data.forEach(item => {
+                      const hour = item.hour;
+                      if (!hourlyCounts[hour]) {
+                          hourlyCounts[hour] = 0;
+                      }
+                      hourlyCounts[hour] += item.visitor_count;
+                  });
+                  const labels = Object.keys(hourlyCounts).sort((a, b) => a - b);
+                  const counts = labels.map(hour => hourlyCounts[hour]);
+                  const ctx = document.getElementById('historyChart').getContext('2d');
+                  new Chart(ctx, {
+                      type: 'bar',
+                      data: {
+                          labels: labels,
+                          datasets: [{
+                              label: '按小时客流量',
+                              data: counts,
+                              backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                          }]
+                      },
+                      options: {
+                          maintainAspectRatio: false,
+                          scales: {
+                              y: { beginAtZero: true }
+                          }
+                      }
+                  });
+              });
+          }
+
+          // 2. 每日趋势图
+          function renderDailyChart() {
+              fetch('/analysis/api/daily_total')
+              .then(response => response.json())
+              .then(data => {
+                  // 将日期从小到大排序
+                  data.sort((a, b) => new Date(a.date) - new Date(b.date));
+                  const labels = data.map(item => item.date);
+                  const counts = data.map(item => item.visitor_count);
+                  const ctx = document.getElementById('dailyChart').getContext('2d');
+                  new Chart(ctx, {
+                      type: 'line',
+                      data: {
+                          labels: labels,
+                          datasets: [{
+                              label: '每日客流趋势',
+                              data: counts,
+                              fill: false,
+                              borderColor: 'rgba(255, 99, 132, 1)',
+                              tension: 0.1
+                          }]
+                      },
+                      options: {
+                          maintainAspectRatio: false,
+                          scales: {
+                              y: { beginAtZero: true }
+                          }
+                      }
+                  });
+              });
+          }
+
+          // 3. 景点分布图（仅显示前20，其余合并为“其他”）
+          function renderScenicChart() {
+              fetch('/analysis/api/scenic_distribution')
+              .then(response => response.json())
+              .then(data => {
+                  // 先根据 visitor_count 降序排序
+                  data.sort((a, b) => b.visitor_count - a.visitor_count);
+                  // 取前20
+                  const top20 = data.slice(0, 20);
+                  // 将其余景点合并为“其他”
+                  const others = data.slice(20);
+                  const othersSum = others.reduce((acc, item) => acc + item.visitor_count, 0);
+                  if (othersSum > 0) {
+                      top20.push({ scenic: '其他', visitor_count: othersSum });
+                  }
+
+                  // 绘制饼图
+                  const labels = top20.map(item => item.scenic);
+                  const counts = top20.map(item => item.visitor_count);
+                  const ctx = document.getElementById('scenicChart').getContext('2d');
+                  new Chart(ctx, {
+                      type: 'pie',
+                      data: {
+                          labels: labels,
+                          datasets: [{
+                              label: '景点客流分布（Top 20 + 其他）',
+                              data: counts
+                          }]
+                      },
+                      options: {
+                          maintainAspectRatio: false,
+                          responsive: true
+                      }
+                  });
+              });
+          }
+
+          // 页面加载后依次渲染三个图表
+          renderHourlyChart();
+          renderDailyChart();
+          renderScenicChart();
+      });
+    </script>
+</body>
+</html>

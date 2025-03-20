@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        input, button { padding: 10px; font-size: 16px; margin: 5px; }
+        #result { margin-top: 20px; font-size: 18px; color: green; }
+    </style>
+</head>
+<body>
+
+    <h1>用户登录</h1>
+    <input type="text" id="username" placeholder="输入用户名"><br>
+    <input type="password" id="password" placeholder="输入密码"><br>
+    <button onclick="login()">登录</button>
+    <p id="result"></p>
+
+    <script>
+        async function login() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !password) {
+                document.getElementById("result").innerText = "❌ 请填写用户名和密码！";
+                return;
+            }
+
+            const response = await fetch("/login_api", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            document.getElementById("result").innerText = data.message;
+
+            if (response.status === 200) {
+                setTimeout(() => { window.location.href = "/search"; }, 2000);
+            }
+        }
+    </script>
+
+</body>
+</html>

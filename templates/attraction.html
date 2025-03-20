@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ attraction.name }} - Scenic Spot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ attraction.name }}</h1>
+            <p>Category: {{ attraction.category }} | Score: ⭐{{ attraction.score }}</p>
+        </header>
+
+        <div class="image-container">
+            <img src="{{ attraction.image }}" alt="{{ attraction.name }}">
+        </div>
+
+        <div class="description">
+            <h2>About {{ attraction.name }}</h2>
+            <p>{{ attraction.description }}</p>
+        </div>
+
+        <footer>
+            <a href="/">⬅ Back to Home</a>
+        </footer>
+    </div>
+</body>
+</html>

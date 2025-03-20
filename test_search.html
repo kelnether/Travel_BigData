@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>景点搜索</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        input, button { padding: 10px; font-size: 16px; }
+        #result { margin-top: 20px; font-size: 18px; color: green; }
+    </style>
+</head>
+<body>
+
+    <h1>景点搜索系统</h1>
+    <input type="text" id="poiName" placeholder="输入景点名称">
+    <button onclick="searchSpot()">搜索</button>
+    <p id="result"></p>
+
+    <script>
+        async function searchSpot() {
+            const user_id = "UserA";  // 假设用户ID
+            const poiName = document.getElementById("poiName").value.trim();
+
+            if (!poiName) {
+                document.getElementById("result").innerText = "❌ 请输入景点名称！";
+                return;
+            }
+
+            const response = await fetch("http://127.0.0.1:5000/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id, poiName })
+            });
+
+            const data = await response.json();
+            document.getElementById("result").innerText = data.message;
+        }
+    </script>
+
+</body>
+</html>
