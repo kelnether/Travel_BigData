@@ -9,19 +9,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>旅游推荐系统</title>
     <style>
-        /* 📌 顶部导航栏 */
+        /* 修改后的导航栏样式，匹配登录/注册页面风格 */
         .navbar {
-            background: linear-gradient(90deg, #007BFF, #00C6FF);
+            background: linear-gradient(90deg, #141e30, #243b55);
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: sans-serif;
         }
         .navbar .logo {
             font-size: 24px;
             font-weight: bold;
-            color: white;
+            color: #fff;
         }
         .navbar ul {
             list-style: none;
@@ -34,13 +35,13 @@
         }
         .navbar ul li a {
             text-decoration: none;
-            color: white;
-            font-size: 18px;
+            color: #fff;
+            font-size: 16px;
             transition: 0.3s;
             padding: 10px 15px;
         }
         .navbar ul li a:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
         }
         .navbar .auth-buttons {
@@ -49,18 +50,20 @@
         }
         .navbar .btn {
             text-decoration: none;
-            color: white;
+            color: #fff;
             padding: 10px 15px;
             border-radius: 5px;
             transition: 0.3s;
             font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
         .navbar .btn-login {
-            background: rgba(255, 255, 255, 0.3);
+            background: transparent;
         }
         .navbar .btn-register {
-            background: #FFCC00;
-            color: #333;
+            background: #03e9f4;
+            color: #fff;
+            border: none;
         }
         .navbar .btn:hover {
             opacity: 0.8;
@@ -70,11 +73,13 @@
 <body>
 
     <nav class="navbar">
-        <div class="logo">🏞️ 旅游大数据推荐</div>
+        <div class="logo">🏞️ 旅游大数据分析推荐</div>
         <ul>
             <li><a href="/">🏠 主页</a></li>
             <li><a href="/search">🔍 搜索景点</a></li>
             <li><a href="/recommendations">✨ 个性化推荐</a></li>
+            <li><a href="/recommendation_ai"> 问问deepseek</a> </li>
+            <li><a href="/analysis"> DashBoard</a> </li>
         </ul>
         <div class="auth-buttons">
             {% if logged_in %}

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个性化推荐</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      /* 背景采用线性渐变，与登录页面一致 */
+      background: linear-gradient(#141e30, #243b55);
+      color: #fff;
+    }
+    /* 整体三栏布局 */
+    .page-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+    }
+    /* 左右侧边栏 */
+    .sidebar {
+      flex: 1;
+      max-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    /* 中间主要内容区域 */
+    .main-content {
+      flex: 2;
+      max-width: 700px;
+    }
+    /* 中间容器（毛玻璃效果） */
+    .container {
+      width: 100%;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .container h2 {
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    /* 个性化推荐卡片 */
+    .spot-card {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      text-align: left;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+    .spot-card:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .spot-card img {
+      width: 100px;
+      height: 80px;
+      border-radius: 5px;
+      margin-right: 15px;
+    }
+    .spot-info {
+      flex: 1;
+    }
+    .spot-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #03e9f4;
+    }
+    .spot-score {
+      font-size: 14px;
+      color: #FF5733;
+    }
+    /* 链接样式 */
+    a.spot-link {
+      text-decoration: none;
+      color: inherit;
+    }
+    /* 堆叠卡片样式（侧栏） */
+    .stacked-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+    .stacked-card:hover {
+      transform: scale(1.03);
+    }
+    .stacked-card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #03e9f4;
+    }
+    .stacked-card p {
+      margin: 0;
+      font-size: 14px;
+      color: #fff;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- 左侧边栏 -->
+    <div class="sidebar left-sidebar">
+      <div class="stacked-card">
+        <h3>热门景点排行</h3>
+        <p>探索上海最受欢迎的景点，体验城市风情与自然之美。</p>
+      </div>
+      <div class="stacked-card">
+        <h3>旅游资讯</h3>
+        <p>获取最新旅游动态与优惠活动，规划你的精彩行程。</p>
+      </div>
+    </div>
+    <!-- 中间主要内容：个性化推荐 -->
+    <div class="main-content">
+      <div class="container">
+        <h2>🌟 你的个性化推荐</h2>
+        <div id="recommendation-output">
+          <!-- 推荐景点将通过 JavaScript 加载 -->
+        </div>
+      </div>
+    </div>
+    <!-- 右侧边栏 -->
+    <div class="sidebar right-sidebar">
+      <div class="stacked-card">
+        <h3>旅行小贴士</h3>
+        <p>提供专业建议，帮你规避旅行中的各种小麻烦。</p>
+      </div>
+      <div class="stacked-card">
+        <h3>活动预告</h3>
+        <p>关注近期精彩活动，享受更多优惠与惊喜体验。</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function fetchRecommendations() {
+      try {
+        const response = await fetch("/recommendations_api", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        const data = await response.json();
+        updateRecommendations(data.recommendations);
+      } catch (error) {
+        console.error("获取推荐失败:", error);
+        document.getElementById("recommendation-output").innerHTML = "<p>❌ 获取推荐失败，请稍后重试。</p>";
+      }
+    }
+
+    function updateRecommendations(recommendations) {
+      const container = document.getElementById("recommendation-output");
+      container.innerHTML = "";
+      if (recommendations && recommendations.length > 0) {
+        recommendations.forEach(spot => {
+          container.innerHTML += `
+            <a class="spot-link" href="/attraction/${spot.id}" target="_blank">
+              <div class="spot-card">
+                <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
+                <div class="spot-info">
+                  <div class="spot-name">${spot.name}</div>
+                  <div class="spot-score">评分: ⭐${spot.score}</div>
+                </div>
+              </div>
+            </a>
+          `;
+        });
+      } else {
+        container.innerHTML = "<p>⚠️ 暂无推荐</p>";
+      }
+    }
+
+    window.onload = fetchRecommendations;
+  </script>
+</body>
+</html>

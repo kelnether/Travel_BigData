@@ -1,179 +1,154 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+{% include 'navbar.html' %}
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>历史数据分析展示</title>
-  <!-- 引入 Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>历史数据分析 Dashboard</title>
+  <!-- 引入 ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <style>
-    /* 简单的标签样式 */
-    .tabs {
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(#141e30, #243b55);
+      color: #fff;
+    }
+    /* 整体 Dashboard 外部容器，采用毛玻璃效果 */
+    .dashboard-wrapper {
       display: flex;
-      margin-bottom: 20px;
+      max-width: 1200px;
+      margin: 50px auto;
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 10px;
+      overflow: hidden;
     }
-    .tab-button {
-      padding: 10px 20px;
-      border: 1px solid #ccc;
-      background-color: #f1f1f1;
+    /* 左侧导航栏 */
+    .sidebar {
+      width: 200px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar ul li {
+      padding: 15px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
       cursor: pointer;
-      margin-right: 2px;
+      transition: background 0.3s;
+      text-align: center;
     }
-    .tab-button.active {
-      background-color: #fff;
-      border-bottom: none;
+    .sidebar ul li.active,
+    .sidebar ul li:hover {
+      background: rgba(3, 233, 244, 0.8);
       font-weight: bold;
     }
+    /* 右侧主内容区域 */
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      box-sizing: border-box;
+    }
+    /* 景点下拉过滤 */
+    .filter-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .filter-container label {
+      margin-right: 10px;
+      font-size: 16px;
+    }
+    .filter-container select {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+    /* 标签内容区域 */
     .tab-content {
       display: none;
     }
     .tab-content.active {
       display: block;
     }
+    /* 图表容器，固定高度 */
+    .chart-container {
+      width: 100%;
+      height: 400px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+    /* 图表 DOM 元素填充容器 */
+    .chart-container > div {
+      width: 100%;
+      height: 100%;
+    }
   </style>
 </head>
 <body>
-  <h1>历史数据分析展示</h1>
-
-  <!-- 景点选择控件 -->
-  <label for="scenicSelect">选择景点：</label>
-  <select id="scenicSelect">
-    <option value="">所有景点</option>
-  </select>
-
-  <!-- 标签导航 -->
-  <div class="tabs">
-    <button class="tab-button active" data-tab="hourly-tab">按小时统计</button>
-    <button class="tab-button" data-tab="daily-tab">每日趋势</button>
-    <button class="tab-button" data-tab="scenic-tab">景点分布</button>
-  </div>
-
-  <!-- 标签内容区域 -->
-  <div id="hourly-tab" class="tab-content active">
-    <canvas id="historyChart" width="800" height="400"></canvas>
-  </div>
-  <div id="daily-tab" class="tab-content">
-    <canvas id="dailyChart" width="800" height="400"></canvas>
-  </div>
-  <div id="scenic-tab" class="tab-content">
-    <canvas id="scenicChart" width="800" height="400"></canvas>
+  <div class="dashboard-wrapper">
+    <!-- 左侧导航栏 -->
+    <div class="sidebar">
+      <ul>
+        <li class="nav-item active" data-tab="hourly-tab">按小时统计</li>
+        <li class="nav-item" data-tab="daily-tab">每日趋势</li>
+        <li class="nav-item" data-tab="scenic-tab">景点分布</li>
+        <li class="nav-item" data-tab="heatmap-tab">热力图</li>
+      </ul>
+    </div>
+    <!-- 右侧主内容区域 -->
+    <div class="main-content">
+      <!-- 景点下拉过滤 -->
+      <div class="filter-container">
+        <label for="scenicSelect">选择景点：</label>
+        <select id="scenicSelect">
+          <option value="">所有景点</option>
+        </select>
+      </div>
+      <!-- 标签内容区域 -->
+      <div id="hourly-tab" class="tab-content active">
+        <div class="chart-container">
+          <div id="hourlyChart"></div>
+        </div>
+      </div>
+      <div id="daily-tab" class="tab-content">
+        <div class="chart-container">
+          <div id="dailyChart"></div>
+        </div>
+      </div>
+      <div id="scenic-tab" class="tab-content">
+        <div class="chart-container">
+          <div id="scenicChart"></div>
+        </div>
+      </div>
+      <div id="heatmap-tab" class="tab-content">
+        <div class="chart-container">
+          <div id="heatmapChart"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    let historyChart = null;
-    let dailyChart = null;
-    let scenicChart = null;
+    let hourlyChart, dailyChart, scenicChart, heatmapChart;
 
-    // 根据选定景点获取按小时统计数据并更新图表
-    function fetchHistoryData(scenic) {
-      let url = '/analysis/api/history';
-      if(scenic) {
-        url += `?scenic=${encodeURIComponent(scenic)}`;
-      }
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          // 统计每个小时的总客流量
-          const hourlyCounts = {};
-          data.forEach(item => {
-            const hour = item.hour;
-            if (!hourlyCounts[hour]) {
-              hourlyCounts[hour] = 0;
-            }
-            hourlyCounts[hour] += item.visitor_count;
-          });
-          const labels = Object.keys(hourlyCounts).sort((a, b) => a - b);
-          const counts = labels.map(hour => hourlyCounts[hour]);
-
-          const ctx = document.getElementById('historyChart').getContext('2d');
-          if(historyChart){
-            historyChart.destroy();
-          }
-          historyChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: '客流量',
-                data: counts,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)'
-              }]
-            },
-            options: {
-              scales: {
-                y: { beginAtZero: true }
-              }
-            }
-          });
-        });
-    }
-
-    // 获取每日总客流数据并绘制折线图，支持景点过滤
-    function fetchDailyData(scenic) {
-      let url = '/analysis/api/daily_total';
-      if (scenic) {
-        url += `?scenic=${encodeURIComponent(scenic)}`;
-      }
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          // 排序日期（假设日期格式为 YYYY-MM-DD）
-          data.sort((a, b) => new Date(a.date) - new Date(b.date));
-          const labels = data.map(item => item.date);
-          const counts = data.map(item => item.visitor_count);
-          const ctx = document.getElementById('dailyChart').getContext('2d');
-          if(dailyChart){
-            dailyChart.destroy();
-          }
-          dailyChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: '每日总客流量',
-                data: counts,
-                fill: false,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                tension: 0.1
-              }]
-            },
-            options: {
-              scales: {
-                y: { beginAtZero: true }
-              }
-            }
-          });
-        });
-    }
-
-    // 获取各景点总客流数据并绘制饼图（该图表不受景点筛选影响）
-    function fetchScenicDistribution() {
-      fetch('/analysis/api/scenic_distribution')
-        .then(response => response.json())
-        .then(data => {
-          const labels = data.map(item => item.scenic);
-          const counts = data.map(item => item.visitor_count);
-          const ctx = document.getElementById('scenicChart').getContext('2d');
-          if(scenicChart){
-            scenicChart.destroy();
-          }
-          scenicChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: '各景点总客流量',
-                data: counts,
-                // 使用默认调色板
-              }]
-            },
-            options: {
-              responsive: true,
-            }
-          });
-        });
-    }
-
-    // 加载所有景点名称，填充下拉框
+    // 加载景点下拉框数据
     function loadScenicNames() {
       fetch('/analysis/api/scenic_names')
         .then(response => response.json())
@@ -188,39 +163,209 @@
         });
     }
 
-    // 标签切换逻辑
+    // 根据景点过滤，获取按小时统计数据并绘制柱状图（ECharts）
+    function fetchHistoryData(scenic) {
+      let url = '/analysis/api/history';
+      if (scenic) {
+        url += `?scenic=${encodeURIComponent(scenic)}`;
+      }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const hourlyCounts = {};
+          data.forEach(item => {
+            const hour = item.hour;
+            hourlyCounts[hour] = (hourlyCounts[hour] || 0) + item.visitor_count;
+          });
+          const hours = Array.from({length: 24}, (_, i) => i);
+          const counts = hours.map(h => hourlyCounts[h] || 0);
+          if (!hourlyChart) {
+            hourlyChart = echarts.init(document.getElementById('hourlyChart'));
+          }
+          const option = {
+            title: { text: '按小时统计', textStyle: { color: '#fff' } },
+            tooltip: {},
+            xAxis: {
+              type: 'category',
+              data: hours,
+              axisLine: { lineStyle: { color: '#fff' } }
+            },
+            yAxis: {
+              type: 'value',
+              axisLine: { lineStyle: { color: '#fff' } }
+            },
+            series: [{
+              data: counts,
+              type: 'bar',
+              itemStyle: { color: 'rgba(54, 162, 235, 0.6)' }
+            }]
+          };
+          hourlyChart.setOption(option);
+        });
+    }
+
+    // 获取每日总客流数据并绘制折线图
+    function fetchDailyData(scenic) {
+      let url = '/analysis/api/daily_total';
+      if (scenic) {
+        url += `?scenic=${encodeURIComponent(scenic)}`;
+      }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          data.sort((a, b) => new Date(a.date) - new Date(b.date));
+          const dates = data.map(item => item.date);
+          const counts = data.map(item => item.visitor_count);
+          if (!dailyChart) {
+            dailyChart = echarts.init(document.getElementById('dailyChart'));
+          }
+          const option = {
+            title: { text: '每日趋势', textStyle: { color: '#fff' } },
+            tooltip: {},
+            xAxis: {
+              type: 'category',
+              data: dates,
+              axisLabel: { rotate: 45 },
+              axisLine: { lineStyle: { color: '#fff' } }
+            },
+            yAxis: {
+              type: 'value',
+              axisLine: { lineStyle: { color: '#fff' } }
+            },
+            series: [{
+              data: counts,
+              type: 'line',
+              smooth: true,
+              lineStyle: { color: 'rgba(255, 99, 132, 1)' }
+            }]
+          };
+          dailyChart.setOption(option);
+        });
+    }
+
+    // 获取各景点总客流数据并绘制饼图
+    function fetchScenicDistribution() {
+      fetch('/analysis/api/scenic_distribution')
+        .then(response => response.json())
+        .then(data => {
+          const labels = data.map(item => item.scenic);
+          const counts = data.map(item => item.visitor_count);
+          if (!scenicChart) {
+            scenicChart = echarts.init(document.getElementById('scenicChart'));
+          }
+          const option = {
+            title: { text: '景点分布', textStyle: { color: '#fff' } },
+            tooltip: { trigger: 'item' },
+            series: [{
+              type: 'pie',
+              radius: '50%',
+              data: labels.map((name, idx) => ({ value: counts[idx], name })),
+              emphasis: {
+                itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+              }
+            }]
+          };
+          scenicChart.setOption(option);
+        });
+    }
+
+    // 获取热力图数据，并绘制热力图（x: 日期, y: 小时）
+    function fetchHeatmapData(scenic) {
+      let url = '/analysis/api/heatmap';
+      if (scenic) {
+        url += `?scenic=${encodeURIComponent(scenic)}`;
+      }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const datesSet = new Set();
+          const hoursSet = new Set();
+          data.forEach(item => {
+            datesSet.add(item.date);
+            hoursSet.add(item.hour);
+          });
+          const dates = Array.from(datesSet).sort((a, b) => new Date(a) - new Date(b));
+          const hours = Array.from(hoursSet).sort((a, b) => a - b);
+          const heatmapData = data.map(item => [dates.indexOf(item.date), hours.indexOf(item.hour), item.visitor_count]);
+          if (!heatmapChart) {
+            heatmapChart = echarts.init(document.getElementById('heatmapChart'));
+          }
+          const option = {
+            title: { text: '热力图', textStyle: { color: '#fff' } },
+            tooltip: {},
+            xAxis: {
+              type: 'category',
+              data: dates,
+              axisLabel: { rotate: 45 },
+              axisLine: { lineStyle: { color: '#fff' } }
+            },
+            yAxis: {
+              type: 'category',
+              data: hours,
+              axisLine: { lineStyle: { color: '#fff' } }
+            },
+            visualMap: {
+              min: 0,
+              max: Math.max(...data.map(item => item.visitor_count)),
+              calculable: true,
+              orient: 'horizontal',
+              left: 'center',
+              bottom: '15%'
+            },
+            series: [{
+              name: '客流量',
+              type: 'heatmap',
+              data: heatmapData,
+              label: { show: true },
+              emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+            }]
+          };
+          heatmapChart.setOption(option);
+        });
+    }
+
+    // 左侧导航栏切换逻辑
     function setupTabs() {
-      const tabButtons = document.querySelectorAll('.tab-button');
-      tabButtons.forEach(button => {
-        button.addEventListener('click', function(){
-          // 移除所有按钮的 active 类
-          tabButtons.forEach(btn => btn.classList.remove('active'));
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        item.addEventListener('click', function(){
+          navItems.forEach(nav => nav.classList.remove('active'));
           this.classList.add('active');
-          // 隐藏所有标签内容
+          const tabId = this.getAttribute('data-tab');
           const contents = document.querySelectorAll('.tab-content');
           contents.forEach(content => content.classList.remove('active'));
-          // 显示对应的标签内容
-          const tabId = this.getAttribute('data-tab');
           document.getElementById(tabId).classList.add('active');
         });
       });
     }
 
-    // 页面加载后初始化
-    document.addEventListener('DOMContentLoaded', function(){
-      loadScenicNames();
-      // 默认加载所有数据（未过滤）的按小时统计图和每日趋势图
-      fetchHistoryData("");
-      fetchDailyData("");
-      fetchScenicDistribution();
-      setupTabs();
-
-      // 当用户选择景点时，更新按小时统计和每日趋势图
+    // 当景点下拉框变化时，更新图表
+    function setupFilter() {
       document.getElementById('scenicSelect').addEventListener('change', function(){
         const scenic = this.value;
         fetchHistoryData(scenic);
         fetchDailyData(scenic);
+        fetchHeatmapData(scenic);
       });
+    }
+
+    // 初始化页面数据和事件绑定
+    document.addEventListener('DOMContentLoaded', function(){
+      loadScenicNames();
+      fetchHistoryData("");
+      fetchDailyData("");
+      fetchScenicDistribution();
+      fetchHeatmapData("");
+      setupTabs();
+      setupFilter();
+    });
+
+    // 窗口调整时，图表自适应容器尺寸
+    window.addEventListener('resize', function(){
+      if(hourlyChart) hourlyChart.resize();
+      if(dailyChart) dailyChart.resize();
+      if(scenicChart) scenicChart.resize();
+      if(heatmapChart) heatmapChart.resize();
     });
   </script>
 </body>

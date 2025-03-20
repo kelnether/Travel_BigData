@@ -1,32 +1,91 @@
 <!DOCTYPE html>
 {% include 'navbar.html' %}
-
-<html lang="en">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ attraction.name }} - Scenic Spot</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ attraction.name }} - 景点详情</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: linear-gradient(#141e30, #243b55);
+    }
+    /* 毛玻璃效果的内容容器 */
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.5);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #fff;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    header p {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    .image-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .image-container img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .description {
+      text-align: left;
+      margin: 20px 0;
+    }
+    .description h2 {
+      margin-bottom: 10px;
+      font-size: 22px;
+      color: #03e9f4;
+    }
+    .description p {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    footer {
+      margin-top: 20px;
+    }
+    footer a {
+      text-decoration: none;
+      color: #03e9f4;
+      font-size: 16px;
+      transition: color 0.3s;
+    }
+    footer a:hover {
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>{{ attraction.name }}</h1>
-            <p>Category: {{ attraction.category }} | Score: ⭐{{ attraction.score }}</p>
-        </header>
-
-        <div class="image-container">
-            <img src="{{ attraction.image }}" alt="{{ attraction.name }}">
-        </div>
-
-        <div class="description">
-            <h2>About {{ attraction.name }}</h2>
-            <p>{{ attraction.description }}</p>
-        </div>
-
-        <footer>
-            <a href="/">⬅ Back to Home</a>
-        </footer>
+  <div class="container">
+    <header>
+      <h1>{{ attraction.name }}</h1>
+      <p>类别: {{ attraction.category }} | 评分: ⭐{{ attraction.score }}</p>
+    </header>
+    <div class="image-container">
+      <img src="{{ attraction.image }}" alt="{{ attraction.name }}">
     </div>
+    <div class="description">
+      <h2>关于{{ attraction.name }}</h2>
+      <p>{{ attraction.description }}</p>
+    </div>
+    <footer>
+      <a href="/">⬅ 返回首页</a>
+    </footer>
+  </div>
 </body>
 </html>

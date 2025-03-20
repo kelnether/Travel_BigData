@@ -1,112 +1,310 @@
-
 <!DOCTYPE html>
 {% include 'navbar.html' %}
-
-
 <html lang="zh">
 <head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>景点搜索</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f4; }
-        input, button { padding: 10px; font-size: 16px; }
-        #result-container { margin-top: 20px; width: 60%; margin-left: auto; margin-right: auto; }
-        .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin: auto; width: 50%; }
-        .recommendations, .search-result { text-align: left; width: 60%; margin-left: auto; margin-right: auto; margin-top: 30px; }
-        .spot-card { display: flex; align-items: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-bottom: 10px; }
-        .spot-card img { width: 100px; height: 80px; border-radius: 5px; margin-right: 15px; }
-        .spot-info { flex: 1; }
-        .spot-name { font-size: 18px; font-weight: bold; color: #007BFF; }
-        .spot-score { font-size: 14px; color: #FF5733; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>景点搜索</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(#141e30, #243b55);
+      color: #fff;
+      text-align: center;
+    }
+    /* 外部容器，使页面内容进入文档流，允许滚动 */
+    .page-wrapper {
+      min-height: 100%;
+      padding-bottom: 40px; /* 给底部留空 */
+    }
+    /* 搜索栏容器 */
+    .search-container {
+      width: 400px;
+      padding: 40px;
+      transition: all 0.5s ease;
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      margin: 20px auto;
+    }
+    /* 初始状态：绝对居中，4:3 比例 */
+    .centered {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      height: 300px;
+    }
+    /* 搜索结果出现后：普通布局 */
+    .moved {
+      position: static;
+      transform: none;
+      margin: 20px auto;
+      height: auto;
+    }
+    .search-container h1 {
+      margin-bottom: 20px;
+    }
+    .search-container input {
+      width: calc(100% - 22px);
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-bottom: 1px solid #fff;
+      background: transparent;
+      color: #fff;
+      margin: 10px 0;
+    }
+    /* 搜索按钮带跑马灯效果 */
+    #search-btn {
+      position: relative;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: 1px solid #03e9f4;
+      background: transparent;
+      color: #03e9f4;
+      cursor: pointer;
+      transition: 0.3s;
+      overflow: hidden;
+    }
+    #search-btn:hover {
+      background: #03e9f4;
+      color: #fff;
+    }
+    #search-btn span {
+      position: absolute;
+      display: block;
+    }
+    #search-btn span:nth-child(1) {
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #03e9f4);
+      animation: btn-anim1 1s linear infinite;
+    }
+    @keyframes btn-anim1 {
+      0% { left: -100%; }
+      50%, 100% { left: 100%; }
+    }
+    #search-btn span:nth-child(2) {
+      top: -100%;
+      right: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, #03e9f4);
+      animation: btn-anim2 1s linear infinite;
+      animation-delay: 0.25s;
+    }
+    @keyframes btn-anim2 {
+      0% { top: -100%; }
+      50%, 100% { top: 100%; }
+    }
+    #search-btn span:nth-child(3) {
+      bottom: 0;
+      right: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(270deg, transparent, #03e9f4);
+      animation: btn-anim3 1s linear infinite;
+      animation-delay: 0.5s;
+    }
+    @keyframes btn-anim3 {
+      0% { right: -100%; }
+      50%, 100% { right: 100%; }
+    }
+    #search-btn span:nth-child(4) {
+      bottom: -100%;
+      left: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(360deg, transparent, #03e9f4);
+      animation: btn-anim4 1s linear infinite;
+      animation-delay: 0.75s;
+    }
+    @keyframes btn-anim4 {
+      0% { bottom: -100%; }
+      50%, 100% { bottom: 100%; }
+    }
+    /* 搜索结果区域 */
+    .results-container, .recommendations {
+      margin: 20px auto;
+      width: 60%;
+      text-align: left;
+    }
+    .results-container h2, .recommendations h2 {
+      margin-bottom: 15px;
+    }
+    /* 景点卡片 */
+    .spot-card {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .spot-card:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .spot-card img {
+      width: 100px;
+      height: 80px;
+      border-radius: 5px;
+      margin-right: 15px;
+    }
+    .spot-info {
+      flex: 1;
+    }
+    .spot-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #03e9f4;
+    }
+    .spot-score {
+      font-size: 14px;
+      color: #FF5733;
+    }
+    /* 链接样式 */
+    a.spot-link {
+      text-decoration: none;
+      color: inherit;
+    }
+    /* 初始时隐藏个性化推荐区域 */
+    .recommendations {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-
-    <div class="search-container">
-        <h1>景点搜索系统</h1>
-        <input type="text" id="poiName" placeholder="输入景点名称">
-        <button onclick="searchSpot()">搜索</button>
+  <div class="page-wrapper">
+    <!-- 搜索栏容器 -->
+    <div id="search-container" class="search-container centered">
+      <h1>景点搜索系统</h1>
+      <input type="text" id="poiName" placeholder="输入景点名称">
+      <button id="search-btn" onclick="searchSpot()">搜索
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
 
-    <!-- 搜索结果 -->
-    <div class="search-result" id="search-result" style="display: none;">
-        <h2>🔍 搜索结果</h2>
-        <div id="search-output"></div>
+    <!-- 搜索结果区域 -->
+    <div class="results-container" id="search-result" style="display: none;">
+      <h2>🔍 搜索结果</h2>
+      <div id="search-output"></div>
     </div>
 
-    <!-- 推荐景点 -->
+    <!-- 个性化推荐区域 -->
     <div class="recommendations" id="recommendations">
-        <h2>🌟 你的个性化推荐</h2>
-        <div id="recommendation-output"></div>
+      <h2>🌟 你的个性化推荐</h2>
+      <div id="recommendation-output"></div>
     </div>
+  </div>
 
-    <script>
-        async function searchSpot() {
-            const user_id = "UserA";  // 假设已登录用户
-            const poiName = document.getElementById("poiName").value.trim();
-
-            if (!poiName) {
-                alert("❌ 请输入景点名称！");
-                return;
-            }
-
-            const response = await fetch("/search_api", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id, poiName })
-            });
-
-            const data = await response.json();
-            updateSearchResult(data.spots);
-            updateRecommendations(data.recommendations);
+  <script>
+    // 解析 URL 查询参数
+    function getQueryParams() {
+      const params = {};
+      const queryString = window.location.search.slice(1);
+      queryString.split('&').forEach(pair => {
+        const [key, value] = pair.split('=');
+        if (key) {
+          params[decodeURIComponent(key)] = decodeURIComponent(value || '');
         }
+      });
+      return params;
+    }
 
-        function updateSearchResult(spots) {
-            const searchDiv = document.getElementById("search-result");
-            const outputDiv = document.getElementById("search-output");
-            outputDiv.innerHTML = "";
+    async function searchSpot() {
+      const user_id = "UserA";  // 假设已登录用户
+      const poiName = document.getElementById("poiName").value.trim();
+      if (!poiName) {
+        alert("❌ 请输入景点名称！");
+        return;
+      }
+      const response = await fetch("/search_api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id, poiName })
+      });
+      const data = await response.json();
+      updateSearchResult(data.spots);
+      updateRecommendations(data.recommendations);
+      // 如果有搜索结果，则将搜索栏切换为 moved 状态
+      if (data.spots && data.spots.length > 0) {
+        const searchContainer = document.getElementById("search-container");
+        searchContainer.classList.remove("centered");
+        searchContainer.classList.add("moved");
+      }
+    }
 
-            if (spots && spots.length > 0) {
-                spots.forEach(spot => {
-                    outputDiv.innerHTML += `
-                        <div class="spot-card">
-                            <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
-                            <div class="spot-info">
-                                <div class="spot-name">${spot.name}</div>
-                                <div class="spot-score">评分: ⭐${spot.score}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                outputDiv.innerHTML = "<p>❌ 未找到相关景点</p>";
-            }
-            searchDiv.style.display = "block";
-        }
+    function updateSearchResult(spots) {
+      const searchDiv = document.getElementById("search-result");
+      const outputDiv = document.getElementById("search-output");
+      outputDiv.innerHTML = "";
+      if (spots && spots.length > 0) {
+        spots.forEach(spot => {
+          // 使用推荐链接格式，点击后进入 /search 页面自动搜索该景点
+          outputDiv.innerHTML += `
+            <a class="spot-link" href="/attraction/${spot.id}">
+              <div class="spot-card">
+                <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
+                <div class="spot-info">
+                  <div class="spot-name">${spot.name}</div>
+                  <div class="spot-score">评分: ⭐${spot.score}</div>
+                </div>
+              </div>
+            </a>
+          `;
+        });
+      } else {
+        outputDiv.innerHTML = "<p>❌ 未找到相关景点</p>";
+      }
+      searchDiv.style.display = "block";
+    }
 
-        function updateRecommendations(recommendations) {
-            const recommendationDiv = document.getElementById("recommendation-output");
-            recommendationDiv.innerHTML = "";
+    function updateRecommendations(recommendations) {
+      const recommendationDiv = document.getElementById("recommendation-output");
+      if (recommendations && recommendations.length > 0) {
+        document.getElementById("recommendations").style.display = "block";
+        recommendationDiv.innerHTML = "";
+        recommendations.forEach(spot => {
+          recommendationDiv.innerHTML += `
+            <a class="spot-link" href="/search?autoSearch=1&poiName=${encodeURIComponent(spot.name)}" target="_blank">
+              <div class="spot-card">
+                <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
+                <div class="spot-info">
+                  <div class="spot-name">${spot.name}</div>
+                  <div class="spot-score">评分: ⭐${spot.score}</div>
+                </div>
+              </div>
+            </a>
+          `;
+        });
+      } else {
+        document.getElementById("recommendations").style.display = "none";
+      }
+    }
 
-            if (recommendations && recommendations.length > 0) {
-                recommendations.forEach(spot => {
-                    recommendationDiv.innerHTML += `
-                        <div class="spot-card">
-                            <img src="${spot.image || 'default.jpg'}" alt="${spot.name}">
-                            <div class="spot-info">
-                                <div class="spot-name">${spot.name}</div>
-                                <div class="spot-score">评分: ⭐${spot.score}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                recommendationDiv.innerHTML = "<p>⚠️ 暂无推荐</p>";
-            }
-        }
-    </script>
+    // 页面加载时，检查 URL 参数，若 autoSearch=1 且 poiName 存在，则自动填充搜索框并调用搜索
+    window.onload = function() {
+      const params = getQueryParams();
+      if (params.autoSearch === "1" && params.poiName) {
+        document.getElementById("poiName").value = params.poiName;
+        searchSpot();
+      }
+    }
+  </script>
 
 </body>
 </html>

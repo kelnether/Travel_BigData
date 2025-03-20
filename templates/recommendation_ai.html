@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 旅游推荐对话</title>
+    <!-- 引入 GitHub Markdown 样式 -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css"
+          integrity="sha512-Kc42N3AUZNkCZv2RGrNprT68PpL/WLOXxK1oZ6lF3RkPbdjPneV9oS+W2uxPJyTIlNIt1K7m7CQHf6bWvKcjMw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            background: linear-gradient(#141e30, #243b55);
+        }
+
+        .chat-container {
+            width: 80%;
+            max-width: 1000px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .chat-header {
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            padding: 15px 20px;
+            font-size: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 对话消息区域固定高度 */
+        .chat-messages {
+            height: 500px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: #007bff;
+            color: #fff;
+        }
+
+        .message.ai .message-content {
+            background: rgba(255, 255, 255, 0.85);
+            color: #333;
+        }
+
+        .chat-input {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-input textarea {
+            flex: 1;
+            resize: none;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .chat-input textarea:hover {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .chat-input button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+
+        /* 跑马灯效果 */
+        .chat-input button span {
+            position: absolute;
+            display: block;
+        }
+
+        .chat-input button span:nth-child(1) {
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #03e9f4);
+            animation: btn-anim1 1s linear infinite;
+        }
+
+        @keyframes btn-anim1 {
+            0% {
+                left: -100%;
+            }
+            50%, 100% {
+                left: 100%;
+            }
+        }
+
+        .chat-input button span:nth-child(2) {
+            top: -100%;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, #03e9f4);
+            animation: btn-anim2 1s linear infinite;
+            animation-delay: 0.25s;
+        }
+
+        @keyframes btn-anim2 {
+            0% {
+                top: -100%;
+            }
+            50%, 100% {
+                top: 100%;
+            }
+        }
+
+        .chat-input button span:nth-child(3) {
+            bottom: 0;
+            right: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(270deg, transparent, #03e9f4);
+            animation: btn-anim3 1s linear infinite;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes btn-anim3 {
+            0% {
+                right: -100%;
+            }
+            50%, 100% {
+                right: 100%;
+            }
+        }
+
+        .chat-input button span:nth-child(4) {
+            bottom: -100%;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(360deg, transparent, #03e9f4);
+            animation: btn-anim4 1s linear infinite;
+            animation-delay: 0.75s;
+        }
+
+        @keyframes btn-anim4 {
+            0% {
+                bottom: -100%;
+            }
+            50%, 100% {
+                bottom: 100%;
+            }
+        }
+
+        /* Markdown 样式 */
+        .markdown-content {
+            padding: 10px;
+        }
+
+        .message.ai .message-content a {
+            color: #007bff;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">AI 旅游推荐对话</div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input">
+        <textarea id="user-input" rows="3" placeholder="请输入你的问题，例如：上海市有哪些景点推荐？"></textarea>
+        <button onclick="sendMessage()">发送
+            <span></span><span></span><span></span><span></span>
+        </button>
+    </div>
+</div>
+
+<!-- 引入 marked.js 用于 Markdown 渲染 -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    /**
+     * 假设 AI 在答案中追加了：
+     * 【推荐列表】：
+     * [
+     *   "崇明东滩湿地公园",
+     *   "佘山国家森林公园",
+     *   ...
+     * ]
+     * 但我们不进行 JSON.parse，而是正则/文本处理
+     *
+     * 实现思路：从 "【推荐列表】：\n[" 到下一个 "]" 之间抽取文本，
+     * 然后剔除引号、逗号、换行，将剩余景点名称替换正文
+     */
+    function extractSpotsRegex(text) {
+        const marker = "【推荐列表】：";
+        const idx = text.lastIndexOf(marker);
+        if (idx < 0) {
+            return [];
+        }
+        // 从 marker 之后再找 "[" 到下一个 "]"
+        const bracketIdx = text.indexOf('[', idx);
+        const endBracket = text.indexOf(']', bracketIdx + 1);
+        if (bracketIdx < 0 || endBracket < 0) {
+            return [];
+        }
+        let raw = text.substring(bracketIdx + 1, endBracket).trim();
+        // raw 现类似:
+        //  "崇明东滩湿地公园",
+        //   "佘山国家森林公园",
+        //   "辰山植物园",
+        // ...
+        // 先去除换行、制表
+        raw = raw.replace(/\r?\n/g, '').trim();
+        // 然后拆分:
+        // 用引号分割, or 逗号
+        // 简易写法：把 "和逗号去掉, 再用 newline, or extra
+        let cleaned = raw.replace(/["']/g, '').replace(/，/g, ',');
+        // cleaned 可能成: 崇明东滩湿地公园, 佘山国家森林公园, ...
+        // 用逗号split
+        let arr = cleaned.split(',').map(s => s.trim()).filter(Boolean);
+        return arr;
+    }
+
+    function linkifyAnswer(text) {
+        // 如果回答中没有 "【推荐列表】：" 则不处理
+        if (!text.includes("【推荐列表】：")) {
+            return text;
+        }
+        // 提取名称
+        const spots = extractSpotsRegex(text);
+        if (spots.length > 0) {
+            // 为避免子串包含
+            spots.sort((a, b) => b.length - a.length);
+            spots.forEach(spot => {
+                if (!spot) return;
+                const regex = new RegExp(spot, 'g');
+                const link = `<a href="/search?autoSearch=1&poiName=${encodeURIComponent(spot)}" target="_blank">${spot}</a>`;
+                text = text.replace(regex, link);
+            });
+        }
+        return text;
+    }
+
+    function appendMessage(sender, text, isMarkdown = false) {
+        const msgBox = document.getElementById("chat-messages");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message " + sender;
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "message-content";
+
+        if (isMarkdown && sender === 'ai') {
+            // 先 linkify
+            const replaced = linkifyAnswer(text);
+            // 再 markdown
+            contentDiv.innerHTML = marked.parse(replaced);
+            contentDiv.classList.add("markdown-content");
+        } else {
+            contentDiv.innerText = text;
+        }
+        messageDiv.appendChild(contentDiv);
+        msgBox.appendChild(messageDiv);
+        msgBox.scrollTop = msgBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById("user-input");
+        const question = input.value.trim();
+        if (!question) return;
+        appendMessage("user", question);
+        input.value = "";
+        const loading = appendMessage("ai", "正在思考，请稍候...");
+
+        try {
+            const resp = await fetch("/recommendation_ai_api", {
+                method: "POST", headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({prompt: question})
+            });
+            console.log("即将发送 fetch...");
+            const response = await fetch("/recommendation_ai_api");
+            console.log("fetch 已返回, response=", response);
+
+            const data = await resp.json();
+            if (resp.ok) {
+                loading.innerHTML = marked.parse(linkifyAnswer(data.recommendation));
+                loading.classList.add("markdown-content");
+            } else {
+                loading.innerText = data.error || "❌ 查询失败，请稍后重试。";
+            }
+        } catch (err) {
+            console.error("提问失败：", err);
+            loading.innerText = "❌ 提问出错，请稍后重试。";
+        }
+    }
+</script>
+</body>
+</html>

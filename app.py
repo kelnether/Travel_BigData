@@ -5,6 +5,7 @@ import pymysql
 import bcrypt
 import subprocess  # 📌 用于运行外部 Python 文件
 
+from ai_recommendation import generate_recommendation
 from bigdata import bigdata_bp
 from analysis import analysis_bp
 
@@ -142,15 +143,36 @@ def logout():
 
 
 # 📌 6. 渲染搜索页面（仅登录用户可访问）
-@app.route('/search')
+@app.route('/search', methods=['GET'])
 def search_page():
     if "user_id" not in session:
         return redirect(url_for("login_page"))
-    return render_template("search.html")
+
+    # 从 URL 查询参数中获取景点名称
+    poiName = request.args.get("poiName", "").strip()
+
+    # 如果存在查询内容，则进行搜索
+    if poiName:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = """
+            SELECT poiName, sightCategoryInfo, commentScore, coverImageUrl 
+            FROM attractions 
+            WHERE poiName LIKE %s 
+            LIMIT 5;
+        """
+        cursor.execute(query, (f"%{poiName}%",))
+        spot_info_list = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        # 渲染模板时将查询条件和结果传入
+        return render_template("search.html", poiName=poiName, results=spot_info_list)
+    else:
+        # 没有查询内容，显示空白的搜索页面
+        return render_template("search.html", results=[])
 
 
-
-# 📌 3. 处理搜索 API，返回搜索结果和推荐
+# 📌 7. 处理搜索 API，返回搜索结果和推荐
 @app.route('/search_api', methods=['POST'])
 def search_api():
     if "user_id" not in session:
@@ -179,7 +201,7 @@ def search_api():
 
     # **2. 进行模糊查询**
     select_sql = """
-    SELECT poiName, sightCategoryInfo, commentScore, coverImageUrl 
+    SELECT poiName, sightCategoryInfo, commentScore, coverImageUrl, id 
     FROM attractions 
     WHERE poiName LIKE %s 
     LIMIT 5;
@@ -200,7 +222,10 @@ def search_api():
         for line in lines:
             if "✅ 为" in line and "推荐的景点" in line:
                 raw_list = line.split("：")[-1].strip()
-                recommended_spots = eval(raw_list)  # 解析成 Python 列表
+                try:
+                    recommended_spots = eval(raw_list)  # 解析成 Python 列表
+                except Exception as e:
+                    print("❌ 解析推荐列表失败", e)
                 break
 
     recommended_spot_names = [spot[0] for spot in recommended_spots]  # 提取景点名称
@@ -213,7 +238,7 @@ def search_api():
     if recommended_spot_names:
         placeholders = ', '.join(['%s'] * len(recommended_spot_names))  # 适配 SQL 语法
         query = f"""
-        SELECT poiName, sightCategoryInfo, commentScore, coverImageUrl 
+        SELECT poiName, sightCategoryInfo, commentScore, coverImageUrl, id 
         FROM attractions 
         WHERE poiName IN ({placeholders});
         """
@@ -232,7 +257,8 @@ def search_api():
                 "name": spot[0],
                 "category": spot[1],
                 "score": spot[2],
-                "image": spot[3]
+                "image": spot[3],
+                "id": spot[4]
             }
             for spot in spot_info_list
         ],
@@ -241,24 +267,85 @@ def search_api():
                 "name": rec[0],
                 "category": rec[1],
                 "score": rec[2],
-                "image": rec[3]
+                "image": rec[3],
+                "id": rec[4]
             }
             for rec in recommendations_info
         ]
     }), 200
 
+# 在你的 app.py 中添加下面的路由：
+@app.route('/recommendations')
+def recommendations_page():
+    if "user_id" not in session:
+        return redirect(url_for("login_page"))
+    return render_template("recommendations.html")
+
+
+# 📌 7.1 添加推荐映射 API（单独推荐页面调用）
+@app.route('/recommendations_api', methods=['POST'])
+def recommendations_api():
+    if "user_id" not in session:
+        return jsonify({"error": "未登录用户无法获取推荐！"}), 403
+
+    user_id = session["user_id"]
+
+    # 运行推荐脚本获取推荐列表
+    recommendation_output = run_script("recommendation_KG/recommend_attractions.py")
+
+    recommended_spots = []
+    if recommendation_output:
+        lines = recommendation_output.split("\n")
+        for line in lines:
+            if "✅ 为" in line and "推荐的景点" in line:
+                raw_list = line.split("：")[-1].strip()
+                try:
+                    recommended_spots = eval(raw_list)
+                except Exception as e:
+                    print("❌ 解析推荐列表失败", e)
+                break
+
+    recommended_spot_names = [spot[0] for spot in recommended_spots]
+
+    # 从数据库获取推荐景点完整信息
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    recommendations_info = []
+    if recommended_spot_names:
+        placeholders = ', '.join(['%s'] * len(recommended_spot_names))
+        query = f"""
+        SELECT poiName, sightCategoryInfo, commentScore, coverImageUrl, id
+        FROM attractions
+        WHERE poiName IN ({placeholders});
+        """
+        cursor.execute(query, tuple(recommended_spot_names))
+        recommendations_info = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        "recommendations": [
+            {
+                "name": rec[0],
+                "category": rec[1],
+                "score": rec[2],
+                "image": rec[3],
+                "id": rec[4]
+            }
+            for rec in recommendations_info
+        ]
+    }), 200
 
 # 📌 8. 景点详情页面
 @app.route("/attraction/<int:spot_id>")
 def attraction_page(spot_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     query = """
-    SELECT id, poiName, sightCategoryInfo, commentScore, coverImageUrl, description
-    FROM attractions 
-    WHERE id = %s 
-    LIMIT 1
+        SELECT id, poiName, sightCategoryInfo, commentScore, coverImageUrl, description
+        FROM attractions 
+        WHERE id = %s 
+        LIMIT 1
     """
     cursor.execute(query, (spot_id,))
     spot_info = cursor.fetchone()
@@ -274,10 +361,33 @@ def attraction_page(spot_id):
         "category": spot_info[2],
         "score": spot_info[3],
         "image": spot_info[4],
-        "description": spot_info[5] or "No description available."
+        "description": spot_info[5] or "暂无介绍。"
     }
 
     return render_template("attraction.html", attraction=attraction_data)
+
+# 渲染提问页面
+# 📌 新增：渲染 AI 推荐页面
+@app.route('/recommendation_ai')
+def recommendation_ai_page():
+    if "user_id" not in session:
+        return redirect(url_for("login_page"))
+    return render_template("recommendation_ai.html")
+
+# 📌 新增：处理 AI 推荐 API 调用
+@app.route('/recommendation_ai_api', methods=['POST'])
+def recommendation_ai_api():
+    if "user_id" not in session:
+        return jsonify({"error": "未登录用户无法调用推荐！"}), 403
+
+    data = request.get_json()
+    prompt = data.get("prompt", "").strip()
+    if not prompt:
+        return jsonify({"error": "提示不能为空！"}), 400
+
+    # 调用 AI 生成旅游推荐
+    recommendation = generate_recommendation(prompt)
+    return jsonify({"recommendation": recommendation}), 200
 
 
 if __name__ == '__main__':

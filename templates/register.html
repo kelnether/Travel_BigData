@@ -1,78 +1,404 @@
-
 <!DOCTYPE html>
 {% include 'navbar.html' %}
 <html lang="zh">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户注册</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        input, select, button { padding: 10px; font-size: 16px; margin: 5px; }
-        #result { margin-top: 20px; font-size: 18px; color: green; }
-        .multi-select { width: 200px; height: 100px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户注册</title>
+  <style>
+    html {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: linear-gradient(#141e30, #243b55);
+    }
+    .my-login-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 400px;
+      padding: 40px;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.5);
+      box-sizing: border-box;
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      color: #fff;
+    }
+    .my-login-box h2 {
+      margin: 0 0 30px;
+      padding: 0;
+      text-align: center;
+    }
+    .user-box {
+      position: relative;
+      margin-bottom: 30px;
+    }
+    .user-box input {
+      width: 100%;
+      padding: 10px 0;
+      font-size: 16px;
+      color: #fff;
+      border: none;
+      border-bottom: 1px solid #fff;
+      background: transparent;
+      outline: none;
+    }
+    .user-box label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 10px 0;
+      font-size: 16px;
+      color: #fff;
+      pointer-events: none;
+      transition: 0.5s;
+    }
+    .user-box input:focus ~ label,
+    .user-box input:valid ~ label {
+      top: -30px;
+      left: 0;
+      color: #03e9f4;
+      font-size: 12px;
+    }
+    button,
+    .my-login-box form a {
+      background: none;
+      border: 1px solid #03e9f4;
+      color: #03e9f4;
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      transition: 0.5s;
+      display: inline-block;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    button:hover,
+    .my-login-box form a:hover {
+      background: #03e9f4;
+      color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 5px #03e9f4, 0 0 25px #03e9f4, 0 0 50px #03e9f4, 0 0 100px #03e9f4;
+    }
+    /* 跑马灯效果 */
+    .my-login-box form a span {
+      position: absolute;
+      display: block;
+    }
+    .my-login-box form a span:nth-child(1) {
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #03e9f4);
+      animation: btn-anim1 1s linear infinite;
+    }
+    @keyframes btn-anim1 {
+      0% { left: -100%; }
+      50%, 100% { left: 100%; }
+    }
+    .my-login-box form a span:nth-child(2) {
+      top: -100%;
+      right: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, #03e9f4);
+      animation: btn-anim2 1s linear infinite;
+      animation-delay: 0.25s;
+    }
+    @keyframes btn-anim2 {
+      0% { top: -100%; }
+      50%, 100% { top: 100%; }
+    }
+    .my-login-box form a span:nth-child(3) {
+      bottom: 0;
+      right: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(270deg, transparent, #03e9f4);
+      animation: btn-anim3 1s linear infinite;
+      animation-delay: 0.5s;
+    }
+    @keyframes btn-anim3 {
+      0% { right: -100%; }
+      50%, 100% { right: 100%; }
+    }
+    .my-login-box form a span:nth-child(4) {
+      bottom: -100%;
+      left: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(360deg, transparent, #03e9f4);
+      animation: btn-anim4 1s linear infinite;
+      animation-delay: 0.75s;
+    }
+    @keyframes btn-anim4 {
+      0% { bottom: -100%; }
+      50%, 100% { bottom: 100%; }
+    }
+    /* 显示已选偏好 */
+    #selectedPreferences {
+      text-align: center;
+      color: #03e9f4;
+      margin-bottom: 20px;
+    }
+    /* Modal 弹窗样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    .modal-content {
+      background-color: #141e30;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #03e9f4;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 10px;
+      color: #fff;
+    }
+    .modal-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .modal-header h3 {
+      margin: 0;
+    }
+    .bubble-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .bubble {
+      width: 80px;
+      height: 80px;
+      border: 2px solid #03e9f4;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      font-size: 14px;
+      transition: background 0.3s;
+      user-select: none;
+    }
+    .bubble.selected {
+      background-color: #03e9f4;
+      color: #141e30;
+    }
+    .bubble .checkmark {
+      display: none;
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 18px;
+      color: #141e30;
+    }
+    .bubble.selected .checkmark {
+      display: block;
+    }
+    /* 新增偏好输入区域 */
+    .new-preference-input {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .new-preference-input input {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #03e9f4;
+      border-radius: 5px;
+      background: transparent;
+      color: #fff;
+      outline: none;
+    }
+    .new-preference-input button {
+      padding: 8px 12px;
+      border: none;
+      background: #03e9f4;
+      color: #141e30;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .modal-footer {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .modal-footer button {
+      padding: 10px 20px;
+      border: none;
+      background: #03e9f4;
+      color: #141e30;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
+  <div class="my-login-box">
+    <h2>注册新用户</h2>
+    <div class="user-box">
+      <input type="text" id="username" required>
+      <label for="username">输入用户名</label>
+    </div>
+    <div class="user-box">
+      <input type="password" id="password" required>
+      <label for="password">输入密码</label>
+    </div>
+    <!-- 按钮点击后弹出偏好选择弹窗 -->
+    <button onclick="openModal()">选择偏好</button>
+    <!-- 显示已选择的偏好 -->
+    <p id="selectedPreferences"></p>
+    <p id="result" style="text-align: center; color: #03e9f4;"></p>
+    <form onsubmit="event.preventDefault(); register();">
+      <a href="javascript:void(0)" onclick="register()">
+        注册
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </a>
+    </form>
+  </div>
 
-    <h1>注册新用户</h1>
-    <input type="text" id="username" placeholder="输入用户名"><br>
-    <input type="password" id="password" placeholder="输入密码"><br>
+  <!-- 偏好选择弹窗 -->
+  <div id="preferenceModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>选择你的偏好</h3>
+      </div>
+      <div class="bubble-container" id="bubbleContainer">
+        <!-- 预设偏好气泡 -->
+        <div class="bubble" data-value="历史" onclick="toggleBubble(this)">
+          历史
+          <span class="checkmark">✔</span>
+        </div>
+        <div class="bubble" data-value="文化" onclick="toggleBubble(this)">
+          文化
+          <span class="checkmark">✔</span>
+        </div>
+        <div class="bubble" data-value="美食" onclick="toggleBubble(this)">
+          美食
+          <span class="checkmark">✔</span>
+        </div>
+        <div class="bubble" data-value="自然" onclick="toggleBubble(this)">
+          自然
+          <span class="checkmark">✔</span>
+        </div>
+      </div>
+      <!-- 新增偏好输入区域 -->
+      <div class="new-preference-input">
+        <input type="text" id="newPreferenceModal" placeholder="添加新偏好">
+        <button type="button" onclick="addNewPreference()">添加偏好</button>
+      </div>
+      <div class="modal-footer">
+        <button onclick="savePreferences()">确认选择</button>
+      </div>
+    </div>
+  </div>
 
-    <p>选择偏好类别（可多选）：</p>
-    <select id="preferences" class="multi-select" multiple>
-        <option value="历史">历史</option>
-        <option value="文化">文化</option>
-        <option value="美食">美食</option>
-        <option value="自然">自然</option>
-    </select><br>
+  <script>
+    // 用于存储用户选择的偏好
+    let selectedPreferencesArray = [];
 
-    <p>或者输入新的偏好：</p>
-    <input type="text" id="new_preference" placeholder="输入新的偏好">
-    <button onclick="addPreference()">添加</button><br>
+    function openModal() {
+      document.getElementById('preferenceModal').style.display = 'block';
+    }
 
-    <button onclick="register()">注册</button>
-    <p id="result"></p>
+    function closeModal() {
+      document.getElementById('preferenceModal').style.display = 'none';
+    }
 
-    <script>
-        function addPreference() {
-            const newPreference = document.getElementById("new_preference").value.trim();
-            if (newPreference) {
-                const select = document.getElementById("preferences");
-                const option = document.createElement("option");
-                option.value = newPreference;
-                option.textContent = newPreference;
-                option.selected = true; // 让新添加的选项默认被选中
-                select.appendChild(option);
-                document.getElementById("new_preference").value = "";
-            }
+    // 切换气泡的选择状态，并更新选择列表
+    function toggleBubble(element) {
+      const value = element.getAttribute('data-value');
+      if (element.classList.contains('selected')) {
+        element.classList.remove('selected');
+        selectedPreferencesArray = selectedPreferencesArray.filter(item => item !== value);
+      } else {
+        element.classList.add('selected');
+        selectedPreferencesArray.push(value);
+      }
+    }
+
+    // 新增偏好：在弹窗中添加新的气泡
+    function addNewPreference() {
+      const input = document.getElementById('newPreferenceModal');
+      const newPref = input.value.trim();
+      if (!newPref) return;
+      // 检查是否已存在同名气泡
+      const existingBubbles = document.querySelectorAll('.bubble');
+      for (const bubble of existingBubbles) {
+        if (bubble.getAttribute('data-value') === newPref) {
+          // 如果已经存在则自动选择
+          if (!bubble.classList.contains('selected')) {
+            toggleBubble(bubble);
+          }
+          input.value = '';
+          return;
         }
+      }
+      // 创建新的气泡
+      const bubbleContainer = document.getElementById('bubbleContainer');
+      const newBubble = document.createElement('div');
+      newBubble.className = 'bubble selected';
+      newBubble.setAttribute('data-value', newPref);
+      newBubble.setAttribute('onclick', 'toggleBubble(this)');
+      newBubble.innerHTML = `${newPref}<span class="checkmark">✔</span>`;
+      bubbleContainer.appendChild(newBubble);
+      selectedPreferencesArray.push(newPref);
+      input.value = '';
+    }
 
-        async function register() {
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const preferences = Array.from(document.getElementById("preferences").selectedOptions).map(option => option.value);
+    // 保存偏好设置并更新主页面显示
+    function savePreferences() {
+      document.getElementById('selectedPreferences').innerText = "已选择: " + selectedPreferencesArray.join(', ');
+      closeModal();
+    }
 
-            if (!username || !password || preferences.length === 0) {
-                document.getElementById("result").innerText = "❌ 请填写所有字段！";
-                return;
-            }
+    // 注册表单提交处理函数
+    async function register() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-            const response = await fetch("/register_api", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password, preferences })
-            });
+      if (!username || !password || selectedPreferencesArray.length === 0) {
+        document.getElementById("result").innerText = "❌ 请填写所有字段并选择至少一个偏好！";
+        return;
+      }
 
-            const data = await response.json();
-            document.getElementById("result").innerText = data.message;
+      const response = await fetch("/register_api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, preferences: selectedPreferencesArray })
+      });
 
-            if (response.status === 201) {
-                setTimeout(() => { window.location.href = "/login"; }, 2000);
-            }
-        }
-    </script>
+      const data = await response.json();
+      document.getElementById("result").innerText = data.message;
 
+      if (response.status === 201) {
+        setTimeout(() => { window.location.href = "/login"; }, 2000);
+      }
+    }
+  </script>
 </body>
 </html>
