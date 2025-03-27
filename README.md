@@ -60,17 +60,17 @@ CREATE TABLE IF NOT EXISTS attraction_visits (
     visit_date DATE NOT NULL,        -- 访问日期
     visitors INT NOT NULL,           -- 游客数
     comfort_level VARCHAR(50),       -- 舒适度（如：舒适、较舒适、一般、拥挤）
-    capacity INT,                    -- 最大承载量（可调整）
-    UNIQUE KEY (poiName, visit_date)  -- 防止重复数据
+    capacity INT,       -- 最大承载量（可调整）
+    UNIQUE KEY (poiName, visit_date) -- 防止重复数据
 );
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,   -- 用户编号（自动递增）
-    username VARCHAR(50) NOT NULL UNIQUE,  -- 用户名（唯一）
-    password VARCHAR(255) NOT NULL         -- 加密后的密码
+    username VARCHAR(50) NOT NULL UNIQUE, -- 用户名（唯一）
+    password VARCHAR(255) NOT NULL       -- 加密后的密码
 );
+insert into users value (1,'userA','123456');
 
-INSERT INTO users VALUE (1, 'userA', '123456');
 
 CREATE TABLE user_preferences (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -79,7 +79,7 @@ CREATE TABLE user_preferences (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-DROP TABLE user_preferences;
+drop table user_preferences;
 
 CREATE TABLE IF NOT EXISTS user_visits (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS user_visits (
     poiName VARCHAR(255) NOT NULL,
     UNIQUE KEY (user_id, poiName)  -- 避免重复搜索记录
 );
+
 
 CREATE TABLE IF NOT EXISTS attractions_test (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -109,6 +110,9 @@ CREATE TABLE IF NOT EXISTS attractions_test (
     description TEXT,
     UNIQUE KEY unique_spot (city, poiName)  -- 避免插入重复数据
 );
+
+ALTER TABLE attractions
+ADD COLUMN description TEXT;
 ```
 
 
