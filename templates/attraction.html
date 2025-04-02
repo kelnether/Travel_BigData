@@ -13,7 +13,24 @@
       font-family: sans-serif;
       background: linear-gradient(#141e30, #243b55);
     }
-    /* 毛玻璃效果的内容容器 */
+    /* 动画关键帧定义 */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInTop {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes slideInBottom {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    /* 毛玻璃效果的内容容器，整体缩放淡入 */
     .container {
       max-width: 600px;
       margin: 50px auto;
@@ -25,6 +42,10 @@
       -webkit-backdrop-filter: blur(8px);
       color: #fff;
       text-align: center;
+      animation: scaleIn 1s ease-out forwards;
+    }
+    header {
+      animation: slideInTop 1s ease-out forwards;
     }
     header h1 {
       margin: 0;
@@ -37,6 +58,7 @@
     .image-container {
       text-align: center;
       margin: 20px 0;
+      animation: fadeIn 1.2s ease-out forwards;
     }
     .image-container img {
       max-width: 100%;
@@ -46,6 +68,7 @@
     .description {
       text-align: left;
       margin: 20px 0;
+      animation: fadeIn 1.4s ease-out forwards;
     }
     .description h2 {
       margin-bottom: 10px;
@@ -58,6 +81,7 @@
     }
     footer {
       margin-top: 20px;
+      animation: slideInBottom 1s ease-out forwards;
     }
     footer a {
       text-decoration: none;

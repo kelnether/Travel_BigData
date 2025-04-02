@@ -15,6 +15,28 @@
       font-family: sans-serif;
       background: linear-gradient(#141e30, #243b55);
     }
+    /* 注册框入场动画：从上方稍偏位置飞入并缩放 */
+    @keyframes registerContainerAnim {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    /* Modal 弹窗动画：淡入并缩放 */
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
     .my-login-box {
       position: absolute;
       top: 50%;
@@ -27,6 +49,7 @@
       box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
       border-radius: 10px;
       color: #fff;
+      animation: registerContainerAnim 1s ease-out forwards;
     }
     .my-login-box h2 {
       margin: 0 0 30px;
@@ -170,6 +193,7 @@
       max-width: 600px;
       border-radius: 10px;
       color: #fff;
+      animation: modalFadeIn 0.5s ease-out forwards;
     }
     .modal-header {
       text-align: center;
@@ -251,6 +275,11 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 16px;
+    }
+    /* Modal 动画关键帧 */
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>

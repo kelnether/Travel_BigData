@@ -16,7 +16,24 @@
       background: linear-gradient(#141e30, #243b55);
       color: #fff;
     }
-    /* 整体 Dashboard 外部容器，采用毛玻璃效果 */
+    /* 动画关键帧定义 */
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideInLeft {
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    /* 整体 Dashboard 外部容器，采用毛玻璃效果，淡入缩放 */
     .dashboard-wrapper {
       display: flex;
       max-width: 1200px;
@@ -27,13 +44,15 @@
       -webkit-backdrop-filter: blur(8px);
       border-radius: 10px;
       overflow: hidden;
+      animation: fadeInScale 1s ease-out forwards;
     }
-    /* 左侧导航栏 */
+    /* 左侧导航栏，飞入效果 */
     .sidebar {
       width: 200px;
       background: rgba(0, 0, 0, 0.3);
       padding: 20px;
       box-sizing: border-box;
+      animation: slideInLeft 1s ease-out forwards;
     }
     .sidebar ul {
       list-style: none;
@@ -54,16 +73,18 @@
       background: rgba(3, 233, 244, 0.8);
       font-weight: bold;
     }
-    /* 右侧主内容区域 */
+    /* 右侧主内容区域，飞入效果 */
     .main-content {
       flex: 1;
       padding: 30px;
       box-sizing: border-box;
+      animation: slideInRight 1s ease-out forwards;
     }
-    /* 景点下拉过滤 */
+    /* 景点下拉过滤，淡入 */
     .filter-container {
       text-align: center;
       margin-bottom: 30px;
+      animation: fadeIn 1s ease-out forwards;
     }
     .filter-container label {
       margin-right: 10px;
@@ -80,11 +101,12 @@
     /* 标签内容区域 */
     .tab-content {
       display: none;
+      animation: fadeIn 1s ease-out forwards;
     }
     .tab-content.active {
       display: block;
     }
-    /* 图表容器，固定高度 */
+    /* 图表容器，固定高度并淡入 */
     .chart-container {
       width: 100%;
       height: 400px;
@@ -93,6 +115,7 @@
       padding: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
       margin-bottom: 20px;
+      animation: fadeIn 1s ease-out forwards;
     }
     /* 图表 DOM 元素填充容器 */
     .chart-container > div {

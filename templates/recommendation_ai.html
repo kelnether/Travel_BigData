@@ -17,7 +17,7 @@
             font-family: sans-serif;
             background: linear-gradient(#141e30, #243b55);
         }
-
+        /* 整体容器动画：淡入+缩放 */
         .chat-container {
             width: 80%;
             max-width: 1000px;
@@ -30,8 +30,13 @@
             overflow: hidden;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            animation: containerFadeIn 1s ease-out forwards;
         }
-
+        @keyframes containerFadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* 头部动画：从顶部飞入 */
         .chat-header {
             background: rgba(0, 0, 0, 0.3);
             color: #fff;
@@ -39,53 +44,60 @@
             font-size: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            animation: flyInTop 1s ease-out forwards;
         }
-
-        /* 对话消息区域固定高度 */
+        @keyframes flyInTop {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        /* 对话消息区域动画：淡入 */
         .chat-messages {
             height: 500px;
             padding: 20px;
             overflow-y: auto;
+            animation: fadeIn 1s ease-out forwards;
         }
-
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         .message {
             margin-bottom: 20px;
             display: flex;
         }
-
         .message.user {
             justify-content: flex-end;
         }
-
         .message.ai {
             justify-content: flex-start;
         }
-
         .message-content {
             max-width: 70%;
             padding: 15px;
             border-radius: 8px;
             line-height: 1.5;
         }
-
         .message.user .message-content {
             background: #007bff;
             color: #fff;
         }
-
         .message.ai .message-content {
             background: rgba(255, 255, 255, 0.85);
             color: #333;
         }
-
+        /* 输入区域动画：从底部飞入 */
         .chat-input {
             padding: 15px 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             background: rgba(0, 0, 0, 0.2);
+            animation: flyInBottom 1s ease-out forwards;
         }
-
+        @keyframes flyInBottom {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
         .chat-input textarea {
             flex: 1;
             resize: none;
@@ -98,12 +110,10 @@
             color: #fff;
             transition: background 0.3s, box-shadow 0.3s;
         }
-
         .chat-input textarea:hover {
             background: rgba(255, 255, 255, 0.3);
             box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
-
         .chat-input button {
             margin-left: 10px;
             padding: 10px 20px;
@@ -117,17 +127,14 @@
             position: relative;
             overflow: hidden;
         }
-
         .chat-input button:hover {
             background: #0056b3;
         }
-
         /* 跑马灯效果 */
         .chat-input button span {
             position: absolute;
             display: block;
         }
-
         .chat-input button span:nth-child(1) {
             top: 0;
             left: -100%;
@@ -136,16 +143,10 @@
             background: linear-gradient(90deg, transparent, #03e9f4);
             animation: btn-anim1 1s linear infinite;
         }
-
         @keyframes btn-anim1 {
-            0% {
-                left: -100%;
-            }
-            50%, 100% {
-                left: 100%;
-            }
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
         }
-
         .chat-input button span:nth-child(2) {
             top: -100%;
             right: 0;
@@ -155,16 +156,10 @@
             animation: btn-anim2 1s linear infinite;
             animation-delay: 0.25s;
         }
-
         @keyframes btn-anim2 {
-            0% {
-                top: -100%;
-            }
-            50%, 100% {
-                top: 100%;
-            }
+            0% { top: -100%; }
+            50%, 100% { top: 100%; }
         }
-
         .chat-input button span:nth-child(3) {
             bottom: 0;
             right: -100%;
@@ -174,16 +169,10 @@
             animation: btn-anim3 1s linear infinite;
             animation-delay: 0.5s;
         }
-
         @keyframes btn-anim3 {
-            0% {
-                right: -100%;
-            }
-            50%, 100% {
-                right: 100%;
-            }
+            0% { right: -100%; }
+            50%, 100% { right: 100%; }
         }
-
         .chat-input button span:nth-child(4) {
             bottom: -100%;
             left: 0;
@@ -193,21 +182,14 @@
             animation: btn-anim4 1s linear infinite;
             animation-delay: 0.75s;
         }
-
         @keyframes btn-anim4 {
-            0% {
-                bottom: -100%;
-            }
-            50%, 100% {
-                bottom: 100%;
-            }
+            0% { bottom: -100%; }
+            50%, 100% { bottom: 100%; }
         }
-
         /* Markdown 样式 */
         .markdown-content {
             padding: 10px;
         }
-
         .message.ai .message-content a {
             color: #007bff;
             text-decoration: underline;
@@ -255,32 +237,21 @@
             return [];
         }
         let raw = text.substring(bracketIdx + 1, endBracket).trim();
-        // raw 现类似:
-        //  "崇明东滩湿地公园",
-        //   "佘山国家森林公园",
-        //   "辰山植物园",
-        // ...
-        // 先去除换行、制表
+        // 去除换行、制表符
         raw = raw.replace(/\r?\n/g, '').trim();
-        // 然后拆分:
-        // 用引号分割, or 逗号
-        // 简易写法：把 "和逗号去掉, 再用 newline, or extra
+        // 去除引号，并替换中文逗号
         let cleaned = raw.replace(/["']/g, '').replace(/，/g, ',');
-        // cleaned 可能成: 崇明东滩湿地公园, 佘山国家森林公园, ...
-        // 用逗号split
+        // 拆分字符串
         let arr = cleaned.split(',').map(s => s.trim()).filter(Boolean);
         return arr;
     }
 
     function linkifyAnswer(text) {
-        // 如果回答中没有 "【推荐列表】：" 则不处理
         if (!text.includes("【推荐列表】：")) {
             return text;
         }
-        // 提取名称
         const spots = extractSpotsRegex(text);
         if (spots.length > 0) {
-            // 为避免子串包含
             spots.sort((a, b) => b.length - a.length);
             spots.forEach(spot => {
                 if (!spot) return;
@@ -300,9 +271,7 @@
         contentDiv.className = "message-content";
 
         if (isMarkdown && sender === 'ai') {
-            // 先 linkify
             const replaced = linkifyAnswer(text);
-            // 再 markdown
             contentDiv.innerHTML = marked.parse(replaced);
             contentDiv.classList.add("markdown-content");
         } else {
@@ -319,21 +288,20 @@
         if (!question) return;
         appendMessage("user", question);
         input.value = "";
-        const loading = appendMessage("ai", "正在思考，请稍候...");
-
+        const loading = document.createElement("div");
+        loading.className = "message ai";
+        loading.innerHTML = `<div class="message-content">正在思考，请稍候...</div>`;
+        document.getElementById("chat-messages").appendChild(loading);
+        document.getElementById("chat-messages").scrollTop = document.getElementById("chat-messages").scrollHeight;
         try {
             const resp = await fetch("/recommendation_ai_api", {
-                method: "POST", headers: {"Content-Type": "application/json"},
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({prompt: question})
             });
-            console.log("即将发送 fetch...");
-            const response = await fetch("/recommendation_ai_api");
-            console.log("fetch 已返回, response=", response);
-
             const data = await resp.json();
             if (resp.ok) {
-                loading.innerHTML = marked.parse(linkifyAnswer(data.recommendation));
-                loading.classList.add("markdown-content");
+                loading.innerHTML = `<div class="message-content markdown-content">${marked.parse(linkifyAnswer(data.recommendation))}</div>`;
             } else {
                 loading.innerText = data.error || "❌ 查询失败，请稍后重试。";
             }

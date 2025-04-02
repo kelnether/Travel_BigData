@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人主页</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100%;
+      font-family: sans-serif;
+      background: linear-gradient(#141e30, #243b55);
+      color: #fff;
+      box-sizing: border-box;
+    }
+    /* 主容器：左右分 30% / 70%，自适应窗口大小 */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 30% 70%;
+      gap: 20px;
+      height: 100%;
+      padding: 20px;
+    }
+    /* 左侧列再按上下 40% / 60% 分割 */
+    .left-col {
+      display: grid;
+      grid-template-rows: 40% 60%;
+      gap: 20px;
+    }
+    /* 通用卡片样式 */
+    .card {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      box-sizing: border-box;
+      opacity: 0; /* 初始隐藏，等待动画完成 */
+    }
+    /* 容器3：左上角，显示头像和基本用户信息 */
+    .container3 {
+      text-align: center;
+      animation: flyInLeft 1s ease-out forwards;
+    }
+    .container3 img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    .container3 h3 {
+      margin: 10px 0 5px;
+    }
+    .container3 p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    /* 容器2：左下方，显示收藏信息 */
+    .container2 {
+      animation: flyInBottom 1s ease-out forwards;
+    }
+    .container2 h3 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .favorites-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .favorites-list li {
+      background: rgba(3, 233, 244, 0.2);
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    /* 容器1：右侧大容器，显示个人动态或详细信息 */
+    .container1 {
+      animation: flyInRight 1s ease-out forwards;
+    }
+    .container1 h3 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .activities-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .activities-list li {
+      margin-bottom: 10px;
+      border-bottom: 1px solid #fff;
+      padding-bottom: 5px;
+      font-size: 14px;
+    }
+    /* 动画定义 */
+    @keyframes flyInLeft {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes flyInBottom {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    @keyframes flyInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-grid">
+    <!-- 左侧：上下分区 -->
+    <div class="left-col">
+      <!-- 容器3：左上，显示头像和基本用户信息 -->
+      <div class="card container3">
+        <img src="{{ user.avatar_url }}" alt="头像">
+        <h3>{{ user.username }}</h3>
+        <p>{{ user.email }}</p>
+        <p>注册日期：{{ user.registration_date }}</p>
+      </div>
+      <!-- 容器2：左下，显示收藏信息 -->
+      <div class="card container2">
+        <h3>收藏信息</h3>
+        {% if user.favorites %}
+          <ul class="favorites-list">
+            {% for favorite in user.favorites %}
+              <li>{{ favorite }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p style="text-align: center;">暂无收藏。</p>
+        {% endif %}
+      </div>
+    </div>
+    <!-- 容器1：右侧大容器，显示个人动态或其他详细信息 -->
+    <div class="card container1">
+      <h3>个人动态</h3>
+      {% if user.activities %}
+        <ul class="activities-list">
+          {% for activity in user.activities %}
+            <li>{{ activity.timestamp }} - {{ activity.description }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p style="text-align: center;">暂无动态更新。</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

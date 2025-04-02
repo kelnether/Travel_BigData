@@ -390,5 +390,59 @@ def recommendation_ai_api():
     return jsonify({"recommendation": recommendation}), 200
 
 
+@app.route('/profile')
+def profile():
+    if "user_id" not in session:
+        return redirect(url_for("login_page"))
+
+    user_id = session["user_id"]
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 获取用户基本信息（仅有 id, username, password）
+        cursor.execute(
+            "SELECT id, username, password FROM users WHERE id = %s",
+            (user_id,)
+        )
+        user_row = cursor.fetchone()
+        if not user_row:
+            cursor.close()
+            conn.close()
+            return "用户信息不存在", 404
+
+        # 由于数据库中没有 email、registration_date、avatar_url、bio 字段，设置默认值
+        user_data = {
+            "id": user_row[0],
+            "username": user_row[1],
+            "email": "未提供",  # 默认邮箱
+            "registration_date": "未知",  # 默认注册日期
+            "avatar_url": "/static/default_avatar.png",  # 默认头像路径
+            "bio": "暂无简介"  # 默认个人简介
+        }
+
+        # 收藏信息：原 user_preferences 表已删除，默认设为空列表
+        user_data["favorites"] = []
+
+        # 获取用户最近动态（这里以搜索记录作为动态，因 user_visits 表只有 id, user_id, poiName）
+        cursor.execute(
+            "SELECT poiName FROM user_visits WHERE user_id = %s ORDER BY id DESC LIMIT 10",
+            (user_id,)
+        )
+        visits = cursor.fetchall() or []
+        # 构造动态列表，每条动态显示“搜索景点：XXX”
+        user_data["activities"] = [{"description": "搜索景点：" + row[0]} for row in visits]
+
+    except Exception as e:
+        print("Error loading profile:", e)
+        return "服务器内部错误", 500
+    finally:
+        cursor.close()
+        conn.close()
+
+    # 渲染模板 profile.html 时，模板中可根据传入的数据进行空值处理
+    return render_template("profile.html", user=user_data)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
