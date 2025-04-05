@@ -1,6 +1,14 @@
-# Travel Bigdata(v1)
+# “乐游上海”--基于flask的上海旅游景点客流的分析及推荐网页
 
 感谢 K 圣开源
+## 项目综述
+本项目是基于flask开发的大数据分析项目，以web为载体展示。
+主体数据分为上海市内景点数据和绝大多数景点的客流量数据。
+### 数据来源
+```txt
+景点：携程；客流量：上海市政府数据平台
+```
+页面内容及功能涵盖：大数据主页大屏、用户主页及登录注册、景点搜索、景点推荐（基于由搜索记录、用户偏好、景点自身数据构建的知识图谱）、deepseek对话推荐（生成的文本可自动跳转查询）、DashBoard（查看所有数据分析维度）、客流量预测。
 
 ## Requirements.txt
 ```txt
@@ -11,6 +19,24 @@ matplotlib>=3.4.0
 statsmodels>=0.12.2
 ```
 
+# 项目各页面及对于功能介绍
+## 大数据主页
+
+## 用户主页及注册细节
+
+## 景点搜索及景点详情页
+
+## 景点个性化推荐及四周的推荐小窗
+
+## Deepseek对话及景点自动点击跳转
+
+## DashBoard
+
+## 客流量预测【为了好写预测模型的ppt和报告硬加的】
+
+
+
+# 部署流程及细节
 ## 景点数据爬虫
 部署数据库后，运行pachong.py
 
@@ -114,6 +140,7 @@ CREATE TABLE IF NOT EXISTS attractions_test (
 ALTER TABLE attractions
 ADD COLUMN description TEXT;
 ```
+
 
 
 
