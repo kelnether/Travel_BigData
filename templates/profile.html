@@ -9,20 +9,22 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 100vh;
       width: 100%;
       font-family: sans-serif;
       background: linear-gradient(#141e30, #243b55);
       color: #fff;
       box-sizing: border-box;
+      overflow-x: hidden;
     }
-    /* 主容器：左右分 30% / 70%，自适应窗口大小 */
+    /* 主容器：固定宽度 1200px，左右分 30% / 70% */
     .main-grid {
       display: grid;
       grid-template-columns: 30% 70%;
       gap: 20px;
-      height: 100%;
+      height: 100vh;
       padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
     /* 左侧列再按上下 40% / 60% 分割 */
     .left-col {
@@ -38,6 +40,7 @@
       padding: 20px;
       box-sizing: border-box;
       opacity: 0; /* 初始隐藏，等待动画完成 */
+      animation-fill-mode: forwards;
     }
     /* 容器3：左上角，显示头像和基本用户信息 */
     .container3 {
@@ -58,32 +61,53 @@
       margin: 5px 0;
       font-size: 14px;
     }
-    /* 容器2：左下方，显示收藏信息 */
+    /* 容器2：左下，改为显示搜索历史记录的“浮动气泡” */
     .container2 {
       animation: flyInBottom 1s ease-out forwards;
+      position: relative; /* 让气泡容器可以在内部绝对定位 */
+      overflow: hidden;   /* 避免气泡飘出可视区域 */
     }
     .container2 h3 {
       text-align: center;
       margin-bottom: 15px;
     }
-    .favorites-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
+    /* 气泡容器 */
+    .bubble-container {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 60px); /* 预留标题高度（可根据实际情况微调） */
     }
-    .favorites-list li {
+    /* 气泡样式 */
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
       background: rgba(3, 233, 244, 0.2);
-      padding: 10px 15px;
-      border-radius: 5px;
+      color: #fff;
+      padding: 8px 12px;
       font-size: 14px;
+      text-align: center;
+      white-space: nowrap;
+      animation: floatUp 4s ease-in-out infinite;
+      /* 也可在JS里随机分配位置或动画延时，这里仅演示基本效果 */
     }
+
+    /* 简单的上下浮动动画，可自行调整幅度、节奏等 */
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+
     /* 容器1：右侧大容器，显示个人动态或详细信息 */
     .container1 {
       animation: flyInRight 1s ease-out forwards;
+      overflow-y: auto;
     }
     .container1 h3 {
       text-align: center;
@@ -100,36 +124,44 @@
       padding-bottom: 5px;
       font-size: 14px;
     }
+    /* 知识图谱区域：横向并置，两个容器宽度固定为右侧容器的一半 */
+    .knowledge-graphs {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
+    .knowledge-graph {
+      width: calc(50% - 10px);  /* 两个容器各占右侧容器宽度的一半，扣除间隙 */
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      padding: 10px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .knowledge-graph h4 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .graph-container {
+      width: 100%;
+      height: 300px;  /* 根据需求可调整高度 */
+      border: 1px solid #fff;
+      border-radius: 5px;
+    }
     /* 动画定义 */
     @keyframes flyInLeft {
-      from {
-        transform: translateX(-100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
     @keyframes flyInBottom {
-      from {
-        transform: translateY(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
     @keyframes flyInRight {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
   </style>
 </head>
@@ -144,17 +176,23 @@
         <p>{{ user.email }}</p>
         <p>注册日期：{{ user.registration_date }}</p>
       </div>
-      <!-- 容器2：左下，显示收藏信息 -->
+      <!-- 容器2：左下，修改为显示搜索历史记录的浮动气泡 -->
       <div class="card container2">
-        <h3>收藏信息</h3>
-        {% if user.favorites %}
-          <ul class="favorites-list">
-            {% for favorite in user.favorites %}
-              <li>{{ favorite }}</li>
+        <h3>搜索历史记录</h3>
+        {% if user.search_history %}
+          <div class="bubble-container">
+            {% for search in user.search_history %}
+              <!-- 这里可以在后端为每个搜索随机生成 left, top, animation-delay 等数值 -->
+              <div class="bubble" style="
+                left: {{ 5 + (loop.index * 10) }}%;
+                top: {{ 20 + (loop.index * 5) }}%;
+                animation-delay: {{ loop.index * 0.3 }}s;">
+                {{ search }}
+              </div>
             {% endfor %}
-          </ul>
+          </div>
         {% else %}
-          <p style="text-align: center;">暂无收藏。</p>
+          <p style="text-align: center;">暂无搜索记录。</p>
         {% endif %}
       </div>
     </div>
@@ -170,7 +208,85 @@
       {% else %}
         <p style="text-align: center;">暂无动态更新。</p>
       {% endif %}
+      <!-- 新增的知识图谱区域 -->
+      <div class="knowledge-graphs">
+        <!-- 用户偏好知识图谱 -->
+        <div class="knowledge-graph" id="graph-preferences">
+          <h4>用户偏好知识图谱</h4>
+          <div class="graph-container"></div>
+        </div>
+        <!-- 用户搜索记录知识图谱 -->
+        <div class="knowledge-graph" id="graph-searches">
+          <h4>用户搜索记录知识图谱</h4>
+          <div class="graph-container"></div>
+        </div>
+      </div>
     </div>
   </div>
+  <!-- 引入 Cytoscape.js 库 -->
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script>
+    // 后端应从数据库中查询后将图谱数据作为 JSON 数据传入模板，这里假设通过 graph_preferences 和 graph_searches 变量传入
+    var graphPreferencesData = {{ graph_preferences|tojson }};
+    var graphSearchesData = {{ graph_searches|tojson }};
+
+    // 初始化“用户偏好知识图谱”
+    var cyPreferences = cytoscape({
+      container: document.querySelector('#graph-preferences .graph-container'),
+      elements: graphPreferencesData,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'background-color': '#6FB1FC',
+            'text-valign': 'center',
+            'color': '#fff',
+            'width': '50px',
+            'height': '50px'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 3,
+            'line-color': '#ccc',
+            'target-arrow-color': '#ccc',
+            'target-arrow-shape': 'triangle'
+          }
+        }
+      ],
+      layout: { name: 'grid' }
+    });
+
+    // 初始化“用户搜索记录知识图谱”
+    var cySearches = cytoscape({
+      container: document.querySelector('#graph-searches .graph-container'),
+      elements: graphSearchesData,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'background-color': '#86B342',
+            'text-valign': 'center',
+            'color': '#fff',
+            'width': '50px',
+            'height': '50px'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 3,
+            'line-color': '#ccc',
+            'target-arrow-color': '#ccc',
+            'target-arrow-shape': 'triangle'
+          }
+        }
+      ],
+      layout: { name: 'grid' }
+    });
+  </script>
 </body>
 </html>

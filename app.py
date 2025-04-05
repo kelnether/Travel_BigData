@@ -1,13 +1,13 @@
+import subprocess  # 📌 用于运行外部 Python 文件
 import sys
 
-from flask import Flask, redirect, url_for, render_template, request, jsonify, session
-import pymysql
 import bcrypt
-import subprocess  # 📌 用于运行外部 Python 文件
+import pymysql
+from flask import Flask, redirect, url_for, render_template, request, jsonify, session
 
 from ai_recommendation import generate_recommendation
-from bigdata import bigdata_bp
 from analysis import analysis_bp
+from bigdata import bigdata_bp
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # Flask session
@@ -23,6 +23,7 @@ def get_db_connection():
         charset="utf8mb4"
     )
 
+
 # 确保 Python 解释器使用 UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stdin.reconfigure(encoding='utf-8')
@@ -30,6 +31,7 @@ sys.stderr.reconfigure(encoding='utf-8')
 
 app.register_blueprint(bigdata_bp)
 app.register_blueprint(analysis_bp)
+
 
 # 📌 1. 直接运行 Neo4j 相关 Python 文件
 def run_script(script_name):
@@ -41,6 +43,7 @@ def run_script(script_name):
         print(f"❌ 运行 {script_name} 失败: {e}")
         return None
 
+
 @app.context_processor
 def inject_logged_in():
     return dict(logged_in=("user_id" in session))
@@ -48,8 +51,19 @@ def inject_logged_in():
 
 # 📌 2. 主页（带导航栏）
 @app.route('/')
+def index_tem():
+    return redirect('http://localhost:3001/#/index')
+
+
+'''
 def index():
     return render_template("index.html", logged_in="user_id" in session)
+'''
+
+
+@app.route('/index_vue')
+def index_vue():
+    return render_template("index_vue.html", logged_in="user_id" in session)
 
 
 # 📌 3. 渲染注册页面
@@ -104,6 +118,7 @@ def register_api():
     run_script("recommendation_KG/sync_user_preferences_to_neo4j.py")
 
     return jsonify({"message": "✅ 注册成功！"}), 201
+
 
 # 📌 4. 渲染登录页面
 @app.route('/login')
@@ -274,6 +289,7 @@ def search_api():
         ]
     }), 200
 
+
 # 在你的 app.py 中添加下面的路由：
 @app.route('/recommendations')
 def recommendations_page():
@@ -336,6 +352,7 @@ def recommendations_api():
         ]
     }), 200
 
+
 # 📌 8. 景点详情页面
 @app.route("/attraction/<int:spot_id>")
 def attraction_page(spot_id):
@@ -366,6 +383,7 @@ def attraction_page(spot_id):
 
     return render_template("attraction.html", attraction=attraction_data)
 
+
 # 渲染提问页面
 # 📌 新增：渲染 AI 推荐页面
 @app.route('/recommendation_ai')
@@ -373,6 +391,7 @@ def recommendation_ai_page():
     if "user_id" not in session:
         return redirect(url_for("login_page"))
     return render_template("recommendation_ai.html")
+
 
 # 📌 新增：处理 AI 推荐 API 调用
 @app.route('/recommendation_ai_api', methods=['POST'])
@@ -388,6 +407,59 @@ def recommendation_ai_api():
     # 调用 AI 生成旅游推荐
     recommendation = generate_recommendation(prompt)
     return jsonify({"recommendation": recommendation}), 200
+
+
+def get_user_preferences_from_mysql(user_id):
+    """从 MySQL 查询用户偏好，并构造偏好相关的节点和边"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT category FROM user_preferences WHERE user_id = %s", (user_id,))
+    preferences = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    nodes = []
+    edges = []
+    for row in preferences:
+        category = row[0]
+        cat_node_id = f"cat_{category}"
+        # 避免重复添加相同类别节点
+        if not any(n["data"]["id"] == cat_node_id for n in nodes):
+            nodes.append({"data": {"id": cat_node_id, "label": category}})
+        edges.append({
+            "data": {
+                "id": f"user_{user_id}_{cat_node_id}",
+                "source": f"user_{user_id}",
+                "target": cat_node_id
+            }
+        })
+    return nodes, edges
+
+def get_user_searches_from_mysql(user_id):
+    """从 MySQL 查询用户搜索记录，并构造搜索记录相关的节点和边"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT poiName FROM user_visits WHERE user_id = %s", (user_id,))
+    searches = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    nodes = []
+    edges = []
+    for row in searches:
+        poi = row[0]
+        poi_node_id = f"poi_{poi}"
+        # 避免重复添加相同景点节点
+        if not any(n["data"]["id"] == poi_node_id for n in nodes):
+            nodes.append({"data": {"id": poi_node_id, "label": poi}})
+        edges.append({
+            "data": {
+                "id": f"user_{user_id}_{poi_node_id}",
+                "source": f"user_{user_id}",
+                "target": poi_node_id
+            }
+        })
+    return nodes, edges
 
 
 @app.route('/profile')
@@ -417,21 +489,38 @@ def profile():
             "username": user_row[1],
             "email": "未提供",  # 默认邮箱
             "registration_date": "未知",  # 默认注册日期
-            "avatar_url": "/static/default_avatar.png",  # 默认头像路径
+            "avatar_url": "static/pic/HEIF Image.png",  # 默认头像路径
             "bio": "暂无简介"  # 默认个人简介
         }
 
-        # 收藏信息：原 user_preferences 表已删除，默认设为空列表
-        user_data["favorites"] = []
-
-        # 获取用户最近动态（这里以搜索记录作为动态，因 user_visits 表只有 id, user_id, poiName）
+        # -----------------------
+        # 1. 获取搜索记录(用于“浮动气泡”)
+        # -----------------------
+        # 这里以 user_visits 表中的 poiName 为用户搜索过的景点关键字
         cursor.execute(
-            "SELECT poiName FROM user_visits WHERE user_id = %s ORDER BY id DESC LIMIT 10",
+            "SELECT poiName FROM user_visits WHERE user_id = %s ORDER BY id DESC LIMIT 20",
             (user_id,)
         )
         visits = cursor.fetchall() or []
-        # 构造动态列表，每条动态显示“搜索景点：XXX”
-        user_data["activities"] = [{"description": "搜索景点：" + row[0]} for row in visits]
+        # 将搜索关键词提取出来，供前端的气泡展示
+        user_data["search_history"] = [row[0] for row in visits]
+
+        # -----------------------
+        # 2. 获取其他动态信息(右侧显示)
+        # -----------------------
+        # 也可以直接复用上面的 visits 数据
+        # 这里示例：把前 10 条记录当作“活动动态”
+        user_data["activities"] = [
+            {"description": "搜索景点：" + row[0]}
+            for row in visits[:10]
+        ]
+
+        # 如果有旧的 favorites 等，也可在此处设置为空或在数据库中查询
+        user_data["favorites"] = []
+
+        # 如果需要知识图谱数据
+        graph_preferences = get_user_preferences_from_mysql(user_id)
+        graph_searches = get_user_searches_from_mysql(user_id)
 
     except Exception as e:
         print("Error loading profile:", e)
@@ -440,9 +529,16 @@ def profile():
         cursor.close()
         conn.close()
 
-    # 渲染模板 profile.html 时，模板中可根据传入的数据进行空值处理
-    return render_template("profile.html", user=user_data)
+    print(graph_preferences)
+    print(graph_searches)
 
+    # 在渲染模板时，将 search_history 传给前端
+    return render_template(
+        "profile.html",
+        user=user_data,
+        graph_preferences=graph_preferences,
+        graph_searches=graph_searches
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

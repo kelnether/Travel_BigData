@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>客流量展示</title>
+  <!-- 引入 Vue 3 -->
+  <script src="https://unpkg.com/vue@3"></script>
+  <!-- 引入 ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <!-- 引入 ECharts-GL -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+  <!-- 样式（less 已转换为 CSS，请根据实际图片路径调整） -->
+  <style>
+    /* 最底层背景 */
+    .background-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: url("static/assets/images/bg.png") no-repeat center center;
+      background-size: cover;
+    }
+    /* 中间层：3D 地图 */
+    .center-map {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    /* 顶层：左右容器 */
+    .charts-container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    /* 左侧容器 */
+    .left-attend {
+      pointer-events: auto;
+      position: fixed;
+      top: 112px;
+      left: 0;
+      bottom: 0;
+      width: 350px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .left-attend .title {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #03e6e6;
+      text-align: center;
+    }
+    .left-attend .list {
+      margin: 10px auto;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background-color: rgba(20, 48, 107, 0.3);
+    }
+    .left-attend .list div {
+      color: #03e6e6;
+      text-align: center;
+      width: 80px;
+    }
+    .left-attend .temper-scroll {
+      width: 100%;
+      height: calc(100vh - 160px);
+      margin: 10px auto;
+      overflow: hidden;
+    }
+    .left-attend .temper-scroll .scroll-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 16px;
+      color: #fff;
+    }
+    /* 右侧容器 */
+    .right-charts {
+      pointer-events: auto;
+      position: fixed;
+      top: 112px;
+      right: 0;
+      bottom: 0;
+      width: 600px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+    .right-charts .chart-box {
+      margin-bottom: 20px;
+    }
+    .right-charts .chart-box .title {
+      color: #03e6e6;
+      margin-bottom: 10px;
+      font-size: 18px;
+      text-align: center;
+    }
+    .right-charts .chart-box .chart-dom {
+      width: 560px;
+      height: 300px;
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .right-charts .bottom-stats {
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
+    }
+    /* 以下是其他 less 文件中的样式（部分示例，可按需调整） */
+    .main {
+      width: 100%;
+      height: 100%;
+      padding: 2% 3%;
+    }
+    .top,
+    .bototm {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    .p1, .p2, .bg {
+      background-repeat: no-repeat;
+    }
+    .p1 {
+      width: 524px;
+      height: 700px;
+      background-image: url("static/assets/images/left_box.png");
+    }
+    .p1 .title {
+      font-size: 20px;
+      margin: 20px 70px;
+      color: #03e6e6;
+    }
+    .p1 .list {
+      width: 400px;
+      height: 35px;
+      margin: 30px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background-color: rgba(20, 48, 107, 0.5);
+    }
+    .p1 .list div {
+      color: #03e6e6;
+      text-align: center;
+    }
+    .p1 .list div:nth-of-type(1) {
+      width: 45px;
+    }
+    .p1 .list div:nth-of-type(2) {
+      width: 110px;
+    }
+    .p1 .list div:nth-of-type(3) {
+      width: 100px;
+    }
+    /* 动画示例 */
+    @keyframes roate1 {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes roate2 {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 最底层：背景图 -->
+    <div class="background-layer"></div>
+    <!-- 中间层：3D 地图 -->
+    <div class="center-map" id="dMap"></div>
+    <!-- 顶层：左右两侧固定容器 -->
+    <div class="charts-container">
+      <!-- 左侧容器 -->
+      <div class="left-attend">
+        <p class="title">客流量情况</p>
+        <div class="list">
+          <div>景点</div>
+          <div>时间</div>
+          <div>人数</div>
+        </div>
+        <!-- 此处原使用 vue3-seamless-scroll，示例中用简单容器代替 -->
+        <div class="temper-scroll">
+          <!-- 使用 Vue 循环渲染 -->
+          <div class="scroll-item" v-for="(item, index) in attendData" :key="index">
+            <span>{{ item.name }}</span>
+            <span>{{ item.depart }}</span>
+            <span>{{ item.time }}</span>
+          </div>
+        </div>
+      </div>
+      <!-- 右侧容器 -->
+      <div class="right-charts">
+        <!-- 24小时客流量柱状图 -->
+        <div class="chart-box p3">
+          <p class="title">24小时客流量</p>
+          <div id="departTotal" class="chart-dom"></div>
+        </div>
+        <!-- 30天客流量折线图 -->
+        <div class="chart-box p4">
+          <p class="title">30天客流量变化</p>
+          <div id="peopleTotal" class="chart-dom"></div>
+        </div>
+        <!-- 各景点人流量占比饼图 -->
+        <div class="bottom-stats">
+          <div class="chart-box p5">
+            <p class="title">各景点人流量占比</p>
+            <div id="flowPieChart" class="chart-dom"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 脚本部分 -->
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+    createApp({
+      setup() {
+        // 左侧滚动列表数据
+        const attendData = ref([
+          { name: "上海博物馆", depart: "2023-06-01", time: "1200" },
+          { name: "外滩",       depart: "2023-06-01", time: "1800" },
+          { name: "古猗园",     depart: "2023-06-01", time: "900" }
+          // 可继续添加数据……
+        ]);
+
+        onMounted(() => {
+          // 注意：请确保你有正确的上海地图 JSON 数据后再调用下行代码
+          // echarts.registerMap("上海", shanghaiGeoJson);
+          drawMap3D();       // 绘制 3D 地图
+          drawDepartTotal(); // 24小时柱状图
+          drawPeopleTotal(); // 30天折线图
+          drawFlowPieChart();// 占比饼图
+        });
+
+        // (A) 3D 地图
+        function drawMap3D() {
+          const mapDom = document.getElementById("dMap");
+          if (!mapDom) return;
+          mapDom.removeAttribute("_echarts_instance_");
+          const mapChart = echarts.init(mapDom);
+          const option = {
+            backgroundColor: "transparent",
+            geo3D: {
+              map: "上海",
+              regionHeight: 2,
+              shading: "lambert",
+              viewControl: { autoRotate: false, distance: 120, alpha: 30, beta: 0 },
+              light: { main: { intensity: 1.2, shadow: true } },
+              itemStyle: {
+                areaColor: "#1b263d",
+                borderColor: "#27ffff",
+                borderWidth: 1.5,
+              },
+              label: {
+                show: true,
+                textStyle: { color: "#03e6e6", fontSize: 14 },
+              },
+              emphasis: {
+                label: { show: false },
+                itemStyle: { areaColor: "#2079f5" },
+              },
+            },
+          };
+          mapChart.setOption(option);
+        }
+
+        // (B) 24小时客流量柱状图
+        function drawDepartTotal() {
+          const dom = document.getElementById("departTotal");
+          if (!dom) return;
+          dom.removeAttribute("_echarts_instance_");
+          const myChart = echarts.init(dom);
+          const hours = Array.from({ length: 24 }, (_, i) => i + "时");
+          const actualData = [
+            100, 120, 150, 180, 210, 300, 400, 480, 530, 600,
+            650, 680, 700, 680, 640, 580, 520, 470, 400, 350,
+            300, 250, 200, 150
+          ];
+          const forecastData = [
+            110, 130, 140, 190, 230, 310, 380, 450, 520, 610,
+            630, 660, 710, 650, 630, 600, 510, 420, 380, 330,
+            280, 260, 210, 160
+          ];
+          const options = {
+            tooltip: { trigger: "axis" },
+            legend: {
+              data: ["实际值", "预测值"],
+              textStyle: { color: "#fff", fontSize: 14 },
+            },
+            grid: { left: "10%", right: "10%", top: "20%", bottom: "10%" },
+            xAxis: {
+              type: "category",
+              data: hours,
+              axisLine: { lineStyle: { color: "#fff" } },
+              axisLabel: { color: "#fff" },
+            },
+            yAxis: {
+              type: "value",
+              name: "客流量",
+              axisLine: { lineStyle: { color: "#fff" } },
+              axisLabel: { color: "#fff" },
+              splitLine: { lineStyle: { color: "rgba(255,255,255,0.2)" } },
+            },
+            series: [
+              {
+                name: "实际值",
+                type: "bar",
+                data: actualData,
+                barWidth: 12,
+                itemStyle: { color: "#009cff" },
+              },
+              {
+                name: "预测值",
+                type: "bar",
+                data: forecastData,
+                barWidth: 12,
+                itemStyle: { color: "#00d887" },
+              },
+            ],
+          };
+          myChart.setOption(options);
+        }
+
+        // (C) 30天客流量折线图
+        function drawPeopleTotal() {
+          const dom = document.getElementById("peopleTotal");
+          if (!dom) return;
+          dom.removeAttribute("_echarts_instance_");
+          const myChart = echarts.init(dom);
+          const days30 = Array.from({ length: 30 }, (_, i) => `${i + 1}日`);
+          const flowData = [
+            300, 320, 350, 400, 380, 420, 450, 460, 480, 500,
+            520, 550, 560, 580, 600, 620, 610, 630, 640, 660,
+            680, 700, 710, 730, 750, 760, 770, 790, 800, 820
+          ];
+          const options = {
+            tooltip: { trigger: "axis" },
+            legend: {
+              data: ["客流量"],
+              textStyle: { color: "#fff", fontSize: 14 },
+            },
+            grid: { left: "10%", right: "10%", top: "20%", bottom: "10%" },
+            xAxis: {
+              type: "category",
+              data: days30,
+              axisLine: { lineStyle: { color: "#fff" } },
+              axisLabel: { color: "#fff" },
+            },
+            yAxis: {
+              type: "value",
+              name: "客流量",
+              axisLine: { lineStyle: { color: "#fff" } },
+              axisLabel: { color: "#fff" },
+              splitLine: { lineStyle: { color: "rgba(255,255,255,0.2)" } },
+            },
+            series: [
+              {
+                name: "客流量",
+                type: "line",
+                data: flowData,
+                smooth: true,
+                symbol: "circle",
+                symbolSize: 6,
+                itemStyle: { color: "#f90" },
+                lineStyle: { color: "#f90", width: 2 },
+                areaStyle: { color: "rgba(249,144,0,0.2)" },
+              },
+            ],
+          };
+          myChart.setOption(options);
+        }
+
+        // (D) 各景点人流量占比饼图
+        function drawFlowPieChart() {
+          const pieDom = document.getElementById("flowPieChart");
+          if (!pieDom) return;
+          pieDom.removeAttribute("_echarts_instance_");
+          const pieChart = echarts.init(pieDom);
+          const scenicData = [
+            { name: "外滩",       value: 500 },
+            { name: "上海博物馆", value: 300 },
+            { name: "东方明珠",   value: 400 },
+            { name: "豫园",       value: 350 },
+            { name: "古猗园",     value: 200 }
+          ];
+          const option = {
+            tooltip: { trigger: "item" },
+            legend: {
+              bottom: 10,
+              left: "center",
+              textStyle: { color: "#fff" },
+            },
+            series: [
+              {
+                name: "景点人流量",
+                type: "pie",
+                radius: ["35%", "60%"],
+                center: ["50%", "45%"],
+                data: scenicData,
+                label: {
+                  color: "#fff",
+                  formatter: "{b}\n{c}人 ({d}%)",
+                },
+                labelLine: {
+                  lineStyle: { color: "#fff" },
+                },
+              },
+            ],
+          };
+          pieChart.setOption(option);
+        }
+
+        return { attendData };
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>
