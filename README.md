@@ -27,15 +27,14 @@
 - 舒适度
 <br/>
 #### 对于提到的景点综合评分的计算，计算代码如下：
+
 ```python
 def convert_sight_level(level):
     mapping = {'5A': 100, '4A': 80, '3A': 60, '2A': 40, '1A': 20}
     return mapping.get(level, 0)
 
-# 应用转换函数
 df['sightLevelScore'] = df['sightLevelStr'].apply(convert_sight_level)
 
-# 指标标准化处理（用户评分、最大承载量、交通通达度）
 df['userScore'] = df['commentScore'] / 5.0 * 100  # 用户评分最大5.0标准化到100
 
 df['historicalVisitorFlowScore'] = df['heatScore']  
@@ -44,7 +43,7 @@ df['capacityScore'] = (df['maxCapacity'] / df['maxCapacity'].max()) * 100
 
 df['trafficScore'] = (df['trafficAccessibility'] / df['trafficAccessibility'].max()) * 100
 
-# 计算综合热度得分
+
 df['comprehensiveHeatScore'] = (
     df['sightLevelScore'] * 0.30 +
     df['userScore'] * 0.25 +
@@ -52,7 +51,9 @@ df['comprehensiveHeatScore'] = (
     df['capacityScore'] * 0.15 +
     df['trafficScore'] * 0.10
 )
+
 ```
+<br/>
 使用加权评分法，为每个指标分配权重。
 景区等级：权重30%
 用户评分：权重25%
