@@ -84,7 +84,7 @@ statsmodels>=0.12.2
 ## 7. 客流量预测【为了好写预测模型的ppt和报告硬加的】
 使用ARIMA时间序列预测模型，以更好捕捉三个月时间内的周期性和序列性客流量变化。
 页面还没做好<br/>
-![还没做好](act_pic/images.jepg)
+![还没做好](act_pic/images.jpeg)
 
 
 <br/>
