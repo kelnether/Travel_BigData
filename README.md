@@ -8,6 +8,60 @@
 ```txt
 景点：携程；客流量：上海市政府数据平台
 ```
+### 数据维度
+#### 景点：
+- 景点名
+- 经纬度
+- 评分
+- 综合评分（计算得到）
+- 景点图片
+- 距市中心距离
+- 评论数
+- 类别
+- 旅游星级
+#### 客流量
+我们选择了三个月内的，93天中每天各小时的客流量数据，每个景点3*31*24条数据
+- 时间
+- 景点名
+- 客流量人数
+- 舒适度
+<br/>
+#### 对于提到的景点综合评分的计算，计算代码如下：
+```python
+def convert_sight_level(level):
+    mapping = {'5A': 100, '4A': 80, '3A': 60, '2A': 40, '1A': 20}
+    return mapping.get(level, 0)
+
+# 应用转换函数
+df['sightLevelScore'] = df['sightLevelStr'].apply(convert_sight_level)
+
+# 指标标准化处理（用户评分、最大承载量、交通通达度）
+df['userScore'] = df['commentScore'] / 5.0 * 100  # 用户评分最大5.0标准化到100
+
+df['historicalVisitorFlowScore'] = df['heatScore']  
+
+df['capacityScore'] = (df['maxCapacity'] / df['maxCapacity'].max()) * 100
+
+df['trafficScore'] = (df['trafficAccessibility'] / df['trafficAccessibility'].max()) * 100
+
+# 计算综合热度得分
+df['comprehensiveHeatScore'] = (
+    df['sightLevelScore'] * 0.30 +
+    df['userScore'] * 0.25 +
+    df['historicalVisitorFlowScore'] * 0.20 +
+    df['capacityScore'] * 0.15 +
+    df['trafficScore'] * 0.10
+)
+```
+使用加权评分法，为每个指标分配权重。
+景区等级：权重30%
+用户评分：权重25%
+历史客流量：权重20%
+最大承载量：权重15%
+交通通达度：权重10%
+<br/>
+<br/>
+
 页面内容及功能涵盖：大数据主页大屏、用户主页及登录注册、景点搜索、景点推荐（基于由搜索记录、用户偏好、景点自身数据构建的知识图谱）、deepseek对话推荐（生成的文本可自动跳转查询）、DashBoard（查看所有数据分析维度）、客流量预测。
 
 ## Requirements.txt
@@ -54,7 +108,7 @@ statsmodels>=0.12.2
 ### 个性化推荐的实现逻辑
 我们基于先前注册时预填的用户偏好和每次搜索时后台同步更新的用户搜索记录构建了知识图谱<br/>
 #### 知识图谱的节点包括：
-- 景点
+- 景点（含有景点评分）
 - 景点类别
 - 用户
 <br/>
