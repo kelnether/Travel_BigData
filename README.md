@@ -218,7 +218,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE, -- 用户名（唯一）
     password VARCHAR(255) NOT NULL       -- 加密后的密码
 );
-insert into users value (1,'userA','123456');
+
 
 
 CREATE TABLE user_preferences (
@@ -228,7 +228,7 @@ CREATE TABLE user_preferences (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-drop table user_preferences;
+
 
 CREATE TABLE IF NOT EXISTS user_visits (
     id INT AUTO_INCREMENT PRIMARY KEY,
