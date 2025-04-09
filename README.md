@@ -199,6 +199,7 @@ CREATE TABLE IF NOT EXISTS attractions (
     sightCategoryInfo VARCHAR(255),
     tagNameList TEXT,
     sightLevelStr VARCHAR(50),
+    description TEXT,
     UNIQUE KEY unique_spot (city, poiName)  -- 避免插入重复数据
 );
 
@@ -236,31 +237,6 @@ CREATE TABLE IF NOT EXISTS user_visits (
     UNIQUE KEY (user_id, poiName)  -- 避免重复搜索记录
 );
 
-
-CREATE TABLE IF NOT EXISTS attractions_test (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    city VARCHAR(100),
-    poiName VARCHAR(255),
-    displayField VARCHAR(255),
-    distanceStr VARCHAR(50),
-    latitude DECIMAL(10,6),
-    longitude DECIMAL(10,6),
-    commentCount INT,
-    commentScore FLOAT,
-    heatScore FLOAT,
-    coverImageUrl TEXT,
-    isFree BOOLEAN,
-    price DECIMAL(10,2),
-    marketPrice DECIMAL(10,2),
-    sightCategoryInfo VARCHAR(255),
-    tagNameList TEXT,
-    sightLevelStr VARCHAR(50),
-    description TEXT,
-    UNIQUE KEY unique_spot (city, poiName)  -- 避免插入重复数据
-);
-
-ALTER TABLE attractions
-ADD COLUMN description TEXT;
 ```
 
 
