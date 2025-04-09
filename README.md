@@ -203,15 +203,6 @@ CREATE TABLE IF NOT EXISTS attractions (
     UNIQUE KEY unique_spot (city, poiName)  -- 避免插入重复数据
 );
 
-CREATE TABLE IF NOT EXISTS attraction_visits (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    poiName VARCHAR(255) NOT NULL,   -- 景点名称
-    visit_date DATE NOT NULL,        -- 访问日期
-    visitors INT NOT NULL,           -- 游客数
-    comfort_level VARCHAR(50),       -- 舒适度（如：舒适、较舒适、一般、拥挤）
-    capacity INT,       -- 最大承载量（可调整）
-    UNIQUE KEY (poiName, visit_date) -- 防止重复数据
-);
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,   -- 用户编号（自动递增）
